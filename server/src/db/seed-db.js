@@ -19,7 +19,7 @@
 const path   = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const mysql  = require('mysql2/promise');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const DB_CONFIG = {
   host:     process.env.DB_HOST     || 'localhost',
@@ -93,9 +93,28 @@ async function seed() {
          (3, 'Chairs',     'SKU-CH-003', 1, 'piece', 850.00)
        ON DUPLICATE KEY UPDATE id = id`
     );
-    console.log('📦 Seeded: products (Steel Rods id=1, Bolts id=2, Chairs id=3)');
+    // ── 6. Initial Stock & Move History ────────────────────────────────────
+    await conn.query(
+      `INSERT INTO stock (product_id, location_id, on_hand_qty, free_to_use_qty)
+       VALUES
+         (1, 1, 150, 150),
+         (2, 1, 500, 500),
+         (3, 1, 80, 80)
+       ON DUPLICATE KEY UPDATE on_hand_qty = VALUES(on_hand_qty)`
+    );
 
-    console.log('\n✅ Seed complete. You can now test the Receipts feature.');
+    await conn.query(
+      `INSERT INTO move_history (id, reference, contact, from_location, to_location, product_id, quantity, direction, status)
+       VALUES
+         (1, 'WH/IN/0001', 'Tata Steel Ltd', 'Vendor Dock', 'WH/STOCK', 1, 150, 'in', 'done'),
+         (2, 'WH/IN/0002', 'Fastener Hub', 'Vendor Dock', 'WH/STOCK', 2, 500, 'in', 'done'),
+         (3, 'WH/IN/0003', 'Nilkamal Furnishings', 'Vendor Dock', 'WH/STOCK', 3, 100, 'in', 'done'),
+         (4, 'WH/OUT/0001', 'Acme Corporation', 'WH/STOCK', 'Customer Site', 3, 20, 'out', 'done')
+       ON DUPLICATE KEY UPDATE id = id`
+    );
+    console.log('📜 Seeded: move_history & stock records');
+
+    console.log('\n✅ Seed complete. You can now test the StockSense features.');
     console.log('   Product IDs to use in Add Product modal:');
     console.log('     1 → Steel Rods  (SKU-SR-001)');
     console.log('     2 → Bolts       (SKU-BT-002)');

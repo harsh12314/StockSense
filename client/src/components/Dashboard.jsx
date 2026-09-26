@@ -6,6 +6,7 @@ import StatusBadge from './common/StatusBadge';
 import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
+import StockLedger from '../features/ledger/StockLedger';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
@@ -55,8 +56,8 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [receipts, setReceipts] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
-  const [activities] = useState(INITIAL_ACTIVITIES);
-  const [warehouses] = useState(INITIAL_WAREHOUSES);
+  const [activities, setActivities] = useState([]);
+  const [warehouses, setWarehouses] = useState(INITIAL_WAREHOUSES);
   const [actionNotice, setActionNotice] = useState(null);
 
   const showNotice = (msg) => {
@@ -81,17 +82,51 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   // Fetch live operational data from backend
   const loadDashboardData = useCallback(async () => {
     try {
-      const [prodRes, recRes, delRes, statsRes] = await Promise.all([
+      const [prodRes, recRes, delRes, statsRes, movesRes] = await Promise.all([
         get('/products').catch(() => ({ data: [] })),
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
+        get('/ledger?limit=30').catch(() => get('/moves?limit=30')).catch(() => ({ data: [] })),
       ]);
 
       if (prodRes?.data) setProducts(prodRes.data);
       if (recRes?.data) setReceipts(recRes.data);
       if (delRes?.data) setDeliveries(delRes.data);
       if (statsRes?.data) setDeliveryStats(statsRes.data);
+
+      if (movesRes?.data && Array.isArray(movesRes.data)) {
+        const formattedMoves = movesRes.data.map((m) => {
+          const isIncoming = (m.direction || '').toLowerCase() === 'in';
+          const isOutgoing = (m.direction || '').toLowerCase() === 'out';
+          const type = isIncoming ? 'IN' : isOutgoing ? 'OUT' : 'ADJUST';
+
+          let timeStr = 'Recent';
+          if (m.move_date) {
+            try {
+              const d = new Date(m.move_date);
+              timeStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            } catch {
+              timeStr = String(m.move_date);
+            }
+          }
+
+          return {
+            id: m.id,
+            type,
+            reference: m.reference || `MOV/${m.id}`,
+            time: timeStr,
+            product: m.product_name || m.product || 'Product',
+            sku: m.product_sku || '',
+            qty: `${isIncoming ? '+' : isOutgoing ? '-' : ''}${m.quantity} ${m.unit_of_measure || 'units'}`,
+            rawQty: m.quantity,
+            contact: m.contact || 'Internal Ops',
+            location: m.to_location || m.from_location || 'Stock',
+            status: m.status || 'done',
+          };
+        });
+        setActivities(formattedMoves);
+      }
     } catch (err) {
       console.warn('Dashboard data fetch error:', err);
     }
@@ -596,43 +631,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'ledger' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Stock Ledger & Move History</h1>
-                  <p className="page-subheading">Immutable chronological record of all product arrivals, departures, and count adjustments.</p>
-                </div>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Reference</th>
-                      <th>Product</th>
-                      <th>Quantity Delta</th>
-                      <th>Location</th>
-                      <th>Contact / Source</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activities.map((a) => (
-                      <tr key={a.id} className={a.type === 'IN' ? 'row-in' : a.type === 'OUT' ? 'row-out' : ''}>
-                        <td>
-                          <span className={`type-tag ${a.type.toLowerCase()}`}>{a.type}</span>
-                        </td>
-                        <td><span className="code-pill">{a.reference}</span></td>
-                        <td className="font-semibold">{a.product}</td>
-                        <td className={a.type === 'IN' ? 'text-green' : 'text-red'}>{a.qty}</td>
-                        <td>{a.location}</td>
-                        <td>{a.contact}</td>
-                        <td><StatusBadge status={a.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <StockLedger />
             </div>
           )}
 

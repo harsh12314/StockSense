@@ -67,6 +67,10 @@ export default function App() {
             element={token ? <Dashboard onLogout={handleLogout} initialTab="ledger" /> : <Navigate to="/login" replace />}
           />
           <Route
+            path="/moves"
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="ledger" /> : <Navigate to="/login" replace />}
+          />
+          <Route
             path="/warehouses"
             element={token ? <Dashboard onLogout={handleLogout} initialTab="warehouses" /> : <Navigate to="/login" replace />}
           />
