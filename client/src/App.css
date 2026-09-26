@@ -1289,9 +1289,9 @@
 
 .auth-hero-branding {
   position: absolute;
-  top: 14%;
-  left: 7%;
-  max-width: 460px;
+  top: 12%;
+  left: 6%;
+  max-width: 380px;
   z-index: 5;
   pointer-events: none;
   animation: heroFadeIn 0.8s ease-out forwards;
@@ -1348,13 +1348,13 @@
 }
 
 .auth-hero-title {
-  font-size: clamp(2.5rem, 5.5vw, 4.4rem);
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
   font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.025em;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
   color: #f8fafc;
   text-transform: uppercase;
-  margin: 0 0 16px 0;
+  margin: 0 0 18px 0;
   text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), 0 0 50px rgba(99, 102, 241, 0.25);
 }
 
@@ -1365,12 +1365,12 @@
 }
 
 .auth-hero-tagline {
-  font-size: clamp(1.05rem, 1.8vw, 1.32rem);
+  font-size: clamp(1rem, 1.5vw, 1.22rem);
   font-weight: 500;
   color: #cbd5e1;
-  line-height: 1.5;
+  line-height: 1.45;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
-  max-width: 440px;
+  max-width: 360px;
   font-style: italic;
   margin: 0;
 }

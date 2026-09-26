@@ -130,7 +130,8 @@ export default function SplineBackground({
             <span>Intelligent Logistics ERP</span>
           </div>
           <h1 className="auth-hero-title">
-            Stock<span className="brand-highlight">Sense</span>
+            STOCK<br />
+            <span className="brand-highlight">SENSE</span>
           </h1>
           <p className="auth-hero-tagline">
             &ldquo;Know what you have, where it is, before it&apos;s a problem.&rdquo;

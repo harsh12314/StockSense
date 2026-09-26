@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SplineBackground from './SplineBackground';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/auth\/?$/, '') + '/auth';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/auth\/?$/, '') + '/auth';
 
 function Signup({ onLogin }) {
   const [loginId, setLoginId] = useState('');
