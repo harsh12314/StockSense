@@ -1,4 +1,4 @@
-DESIGN SYSTEM & UI SPECIFICATION — StockSense
+# DESIGN SYSTEM & UI SPECIFICATION — StockSense
 
 ## 1. Visual Identity & Design Philosophy
 StockSense features a clean, high-contrast, data-dense interface tailored specifically for warehouse and marketplace inventory operations. It avoids generic dark SaaS templates by utilizing warm slate, packaging kraft accents, ink tones, and clear semantic state badges.
