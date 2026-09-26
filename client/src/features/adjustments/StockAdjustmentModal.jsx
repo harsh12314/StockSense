@@ -153,11 +153,11 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
             Loading warehouse catalog...
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
+          <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
             {/* Product Selector */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label htmlFor="adj-product" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Select Product <span style={{ color: 'var(--color-danger)' }}>*</span>
+              <label htmlFor="adj-product" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>
+                Select Product <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select
                 id="adj-product"
@@ -165,7 +165,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
                 required
-                style={{ width: '100%', padding: '10px 12px', background: 'var(--color-surface-elevated, #21262d)', color: '#fff', border: '1px solid var(--color-border)', borderRadius: 6 }}
+                style={{ width: '100%', padding: '10px 14px', background: '#ffffff', color: '#0f172a', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: '0.925rem' }}
               >
                 <option value="">-- Choose a Product --</option>
                 {products.map((p) => (
@@ -178,8 +178,8 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
 
             {/* Location Selector */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label htmlFor="adj-location" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>
-                Storage Location / Bin <span style={{ color: 'var(--color-danger)' }}>*</span>
+              <label htmlFor="adj-location" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>
+                Storage Location / Bin <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select
                 id="adj-location"
@@ -187,7 +187,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 required
-                style={{ width: '100%', padding: '10px 12px', background: 'var(--color-surface-elevated, #21262d)', color: '#fff', border: '1px solid var(--color-border)', borderRadius: 6 }}
+                style={{ width: '100%', padding: '10px 14px', background: '#ffffff', color: '#0f172a', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: '0.925rem' }}
               >
                 {locations.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -200,21 +200,21 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
             {/* Reconciliation Comparison Box */}
             <div
               style={{
-                background: 'var(--color-surface-elevated, #1c2128)',
-                border: '1px solid var(--color-border, #30363d)',
-                borderRadius: 8,
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: 10,
                 padding: '16px',
                 marginBottom: 16,
               }}
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500, marginBottom: 4 }}>
                     Theoretical Recorded Stock
                   </div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a' }}>
                     {fetchingStock ? '...' : recordedQty}{' '}
-                    <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--color-text-muted)' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b' }}>
                       {selectedProductObj?.unit_of_measure || 'units'}
                     </span>
                   </div>
@@ -223,9 +223,9 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
                 <div>
                   <label
                     htmlFor="adj-counted"
-                    style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}
+                    style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500, display: 'block', marginBottom: 4 }}
                   >
-                    Actual Counted Quantity <span style={{ color: 'var(--color-danger)' }}>*</span>
+                    Actual Counted Quantity <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     id="adj-counted"
@@ -238,13 +238,13 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
                     required
                     style={{
                       width: '100%',
-                      padding: '8px 10px',
+                      padding: '8px 12px',
                       fontSize: '1.1rem',
                       fontWeight: 600,
-                      background: 'var(--color-bg, #0d1117)',
-                      color: '#fff',
-                      border: '1px solid var(--color-border, #30363d)',
-                      borderRadius: 6,
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 8,
                     }}
                   />
                 </div>
@@ -254,34 +254,34 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
               {delta !== null && (
                 <div
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: 6,
+                    padding: '10px 14px',
+                    borderRadius: 8,
                     fontSize: '0.9rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     background:
                       delta > 0
-                        ? 'rgba(5, 150, 105, 0.15)'
+                        ? 'rgba(16, 185, 129, 0.1)'
                         : delta < 0
-                        ? 'rgba(225, 29, 72, 0.15)'
-                        : 'rgba(59, 130, 246, 0.15)',
+                        ? 'rgba(239, 68, 68, 0.1)'
+                        : 'rgba(59, 130, 246, 0.1)',
                     color:
                       delta > 0
-                        ? '#34d399'
+                        ? '#059669'
                         : delta < 0
-                        ? '#f87171'
-                        : '#60a5fa',
-                    border: `1px solid ${
+                        ? '#dc2626'
+                        : '#2563eb',
+                    border: `1.5px solid ${
                       delta > 0
-                        ? 'rgba(5, 150, 105, 0.3)'
+                        ? 'rgba(16, 185, 129, 0.3)'
                         : delta < 0
-                        ? 'rgba(225, 29, 72, 0.3)'
+                        ? 'rgba(239, 68, 68, 0.3)'
                         : 'rgba(59, 130, 246, 0.3)'
                     }`,
                   }}
                 >
-                  <span style={{ fontWeight: 500 }}>
+                  <span style={{ fontWeight: 600 }}>
                     {delta > 0 ? 'Surplus (Stock Increment)' : delta < 0 ? 'Deficit (Stock Shrinkage)' : 'Exact Match (No Change)'}
                   </span>
                   <span style={{ fontWeight: 700, fontSize: '1rem' }}>
@@ -293,7 +293,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
 
             {/* Notes / Reason */}
             <div className="form-group" style={{ marginBottom: 20 }}>
-              <label htmlFor="adj-notes" style={{ display: 'block', marginBottom: 6, fontWeight: 500 }}>
+              <label htmlFor="adj-notes" style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>
                 Audit Reason / Reference Notes
               </label>
               <input
@@ -302,7 +302,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSuccess }) {
                 placeholder="e.g. End of month cycle count, Damaged packaging, Shelf recount"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', background: 'var(--color-surface-elevated, #21262d)', color: '#fff', border: '1px solid var(--color-border)', borderRadius: 6 }}
+                style={{ width: '100%', padding: '10px 14px', background: '#ffffff', color: '#0f172a', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: '0.925rem' }}
               />
             </div>
 

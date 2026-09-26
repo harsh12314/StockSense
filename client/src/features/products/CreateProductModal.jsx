@@ -23,7 +23,6 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
   useEffect(() => {
     if (isOpen) {
       loadCategories();
-      // Reset form
       setForm({ name: '', sku: '', category_id: '', unit_of_measure: 'pcs', per_unit_cost: '', initial_stock: '' });
       setErrors({});
       setSubmitError('');
@@ -50,8 +49,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Product name is required';
     if (!form.sku.trim()) errs.sku = 'SKU / Code is required';
-    if (form.initial_stock && isNaN(Number(form.initial_stock))) errs.initial_stock = 'Must be a number';
-    if (form.per_unit_cost && isNaN(Number(form.per_unit_cost))) errs.per_unit_cost = 'Must be a number';
+    if (form.initial_stock && isNaN(Number(form.initial_stock))) errs.initial_stock = 'Must be a valid number';
+    if (form.per_unit_cost && isNaN(Number(form.per_unit_cost))) errs.per_unit_cost = 'Must be a valid number';
     return errs;
   }
 
@@ -88,7 +87,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
       onCreated(res.data);
       onClose();
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(err.message || 'Failed to create product.');
     } finally {
       setLoading(false);
     }
@@ -103,51 +102,62 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         style={{ maxWidth: '540px', width: '100%' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Modal Header */}
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '36px', height: '36px', borderRadius: '8px',
-              background: 'linear-gradient(135deg, var(--customs-navy-bg), rgba(147,197,253,0.15))',
-              border: '1px solid rgba(147,197,253,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--customs-navy)',
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#2563EB',
             }}>
-              <Package size={18} />
+              <Package size={20} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink-primary)', margin: 0 }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
                 New Product
               </h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--ink-secondary)', margin: 0 }}>
-                Add to your product catalogue
+              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '2px 0 0' }}>
+                Add an item to your central inventory catalogue
               </p>
             </div>
           </div>
-          <button className="modal-close" onClick={onClose} type="button">
+          <button
+            className="modal-close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
+        {/* Modal Body Form */}
+        <form onSubmit={handleSubmit} style={{ margin: 0 }}>
+          <div className="modal-body">
             {submitError && (
               <div style={{
-                padding: '10px 14px', borderRadius: '6px',
-                background: 'var(--stamp-vermilion-bg)', color: 'var(--stamp-vermilion)',
-                border: '1px solid rgba(248,113,113,0.2)', fontSize: '0.85rem',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: '#FEF2F2',
+                color: '#DC2626',
+                border: '1px solid #FCA5A5',
+                fontSize: '0.85rem',
               }}>
                 {submitError}
               </div>
             )}
 
-            {/* Name */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            {/* Product Name */}
+            <div className="form-group">
               <label htmlFor="prod-name">
-                <Package size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                Product Name <span style={{ color: 'var(--stamp-vermilion)' }}>*</span>
+                <Package size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
+                Product Name <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 id="prod-name"
@@ -156,15 +166,16 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 autoFocus
+                required
               />
               {errors.name && <div className="field-error">{errors.name}</div>}
             </div>
 
-            {/* SKU */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            {/* SKU / Code */}
+            <div className="form-group">
               <label htmlFor="prod-sku">
-                <Hash size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                SKU / Code <span style={{ color: 'var(--stamp-vermilion)' }}>*</span>
+                <Hash size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
+                SKU / Code <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 id="prod-sku"
@@ -172,15 +183,16 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 placeholder="e.g. CHAIR-PRO-001"
                 value={form.sku}
                 onChange={(e) => set('sku', e.target.value.toUpperCase())}
-                style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
+                style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}
+                required
               />
               {errors.sku && <div className="field-error">{errors.sku}</div>}
             </div>
 
-            {/* Category row */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            {/* Category dropdown + New button */}
+            <div className="form-group">
               <label htmlFor="prod-category">
-                <Tag size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                <Tag size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
                 Category
               </label>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -200,19 +212,21 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   className="btn btn-secondary btn-sm"
                   onClick={() => setShowNewCategory((v) => !v)}
                   title="Add new category"
-                  style={{ whiteSpace: 'nowrap' }}
+                  style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
                   <Plus size={14} /> New
                 </button>
               </div>
+
               {showNewCategory && (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                   <input
                     type="text"
-                    placeholder="Category name"
+                    placeholder="New category name..."
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
+                    style={{ flex: 1 }}
                   />
                   <button
                     type="button"
@@ -226,11 +240,11 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
               )}
             </div>
 
-            {/* Unit + Cost (2-col) */}
+            {/* Unit of Measure + Per Unit Cost */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group">
                 <label htmlFor="prod-uom">
-                  <Ruler size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                  <Ruler size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
                   Unit of Measure
                 </label>
                 <select
@@ -242,10 +256,10 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group">
                 <label htmlFor="prod-cost">
-                  <DollarSign size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                  Per Unit Cost
+                  <DollarSign size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
+                  Per Unit Cost (₹)
                 </label>
                 <input
                   id="prod-cost"
@@ -261,11 +275,11 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
             </div>
 
             {/* Initial Stock */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group">
               <label htmlFor="prod-stock">
-                <Boxes size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                <Boxes size={13} style={{ marginRight: 4, verticalAlign: 'middle', color: '#3B82F6' }} />
                 Initial Stock
-                <span style={{ color: 'var(--ink-muted)', fontWeight: 400, marginLeft: 4 }}>(optional)</span>
+                <span style={{ color: '#94A3B8', fontWeight: 400, marginLeft: 4 }}>(optional)</span>
               </label>
               <input
                 id="prod-stock"
@@ -277,19 +291,28 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 onChange={(e) => set('initial_stock', e.target.value)}
               />
               {errors.initial_stock && <div className="field-error">{errors.initial_stock}</div>}
-              <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', marginTop: '4px' }}>
-                Will be recorded in the default warehouse location and logged to Move History.
+              <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px' }}>
+                Will be automatically allocated to default warehouse storage and logged to Move History.
               </div>
             </div>
-
           </div>
 
-          {/* Footer */}
+          {/* Modal Footer */}
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+              style={{ minWidth: '120px' }}
+            >
               {loading ? 'Creating…' : 'Create Product'}
             </button>
           </div>
