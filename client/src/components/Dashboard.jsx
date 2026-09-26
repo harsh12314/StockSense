@@ -53,11 +53,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
   const [activities, setActivities] = useState([]);
-<<<<<<< HEAD
   const [warehouses, setWarehouses] = useState([]);
-=======
-  const [warehouses, setWarehouses] = useState(INITIAL_WAREHOUSES);
->>>>>>> feature/ledger
   const [actionNotice, setActionNotice] = useState(null);
 
   const showNotice = (msg) => {
