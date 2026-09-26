@@ -7,6 +7,9 @@ import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
 import TransferList from '../features/transfers/TransferList';
+import StockLedger from '../features/ledger/StockLedger';
+import AdjustmentList from '../features/adjustments/AdjustmentList';
+import WarehouseSettings from '../features/settings/WarehouseSettings';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
 import CreateTransferModal from '../features/transfers/CreateTransferModal';
@@ -87,8 +90,8 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
-        get('/ref/warehouses').catch(() => ({ data: [] })),
-        get('/ref/moves').catch(() => ({ data: [] })),
+        get('/settings/warehouses').catch(() => get('/ref/warehouses')).catch(() => ({ data: [] })),
+        get('/ledger?limit=30').catch(() => get('/moves?limit=30')).catch(() => get('/ref/moves')).catch(() => ({ data: [] })),
         get('/transfers/stats').catch(() => ({ data: {} })),
       ]);
 
@@ -103,32 +106,44 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           id: w.id,
           code: w.short_code || w.code || `WH${w.id}`,
           name: w.name,
-          location: w.address || 'Main Storage Facility',
+          location: w.address || w.location || 'Main Storage Facility',
+          locations: w.locations || [],
+          total_stock_qty: w.total_stock_qty || 0,
         })));
       }
 
-      if (movesRes?.data && movesRes.data.length > 0) {
-        const mapped = movesRes.data.map((m) => {
-          const isIncoming = m.direction === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock';
+      if (movesRes?.data && Array.isArray(movesRes.data)) {
+        const formattedMoves = movesRes.data.map((m) => {
+          const isIncoming = (m.direction || '').toLowerCase() === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock' || m.to_location === 'WH/STOCK';
           const isAdjustment = m.reference?.startsWith('ADJ') || m.contact === 'Stock Adjustment';
           const isTransfer = m.reference?.includes('/TRANS/') || m.contact === 'Internal Transfer';
           const actType = isTransfer ? 'TRANS' : isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
+
+          let timeStr = 'Recent';
+          if (m.move_date) {
+            try {
+              const d = new Date(m.move_date);
+              timeStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            } catch {
+              timeStr = String(m.move_date);
+            }
+          }
 
           return {
             id: m.id,
             type: actType,
             reference: m.reference || `MOV/${m.id}`,
-            product: m.product_name || `Product #${m.product_id}`,
-            qty: `${isTransfer ? '⇄ ' : actType === 'IN' ? '+' : '-'}${m.quantity} ${m.uom || 'units'}`,
-            location: isTransfer ? `${m.from_location} → ${m.to_location}` : (m.to_location || m.from_location || 'Stock Room'),
+            time: timeStr,
+            product: m.product_name || m.product || `Product #${m.product_id}`,
+            sku: m.product_sku || '',
+            qty: `${isTransfer ? '⇄ ' : actType === 'IN' ? '+' : '-'}${m.quantity} ${m.unit_of_measure || m.uom || 'units'}`,
+            rawQty: m.quantity,
+            location: isTransfer ? `${m.from_location} → ${m.to_location}` : (m.to_location || m.from_location || 'Stock'),
             contact: m.contact || (isIncoming ? 'Supplier' : 'Customer'),
             status: m.status || 'done',
-            time: m.move_date
-              ? new Date(m.move_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'Recent',
           };
         });
-        setActivities(mapped);
+        setActivities(formattedMoves);
       }
     } catch (err) {
       console.warn('Dashboard live data fetch error:', err);
@@ -643,107 +658,29 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'ledger' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Stock Ledger & Move History</h1>
-                  <p className="page-subheading">Immutable chronological record of all product arrivals, departures, and count adjustments.</p>
-                </div>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Reference</th>
-                      <th>Product</th>
-                      <th>Quantity Delta</th>
-                      <th>Location</th>
-                      <th>Contact / Source</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activities.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
-                          No movements found in ledger history.
-                        </td>
-                      </tr>
-                    ) : (
-                      activities.map((a) => (
-                        <tr key={a.id} className={a.type === 'IN' ? 'row-in' : a.type === 'OUT' ? 'row-out' : ''}>
-                          <td>
-                            <span className={`type-tag ${a.type.toLowerCase()}`}>{a.type}</span>
-                          </td>
-                          <td><span className="code-pill">{a.reference}</span></td>
-                          <td className="font-semibold">{a.product}</td>
-                          <td className={a.type === 'IN' ? 'text-green' : 'text-red'}>{a.qty}</td>
-                          <td>{a.location}</td>
-                          <td>{a.contact}</td>
-                          <td><StatusBadge status={a.status} /></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <StockLedger />
             </div>
           )}
 
           {activeTab === 'warehouses' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Warehouses & Storage Facilities</h1>
-                  <p className="page-subheading">Configure multi-warehouse storage units, short codes, and internal locations.</p>
-                </div>
-              </div>
+              <WarehouseSettings />
+            </div>
+          )}
 
-              <div className="warehouse-grid">
-                {warehouses.length === 0 ? (
-                  <div className="empty-state-card" style={{ gridColumn: '1 / -1' }}>
-                    <p>No warehouses registered yet.</p>
-                  </div>
-                ) : (
-                  warehouses.map((wh) => (
-                    <div key={wh.id} className="warehouse-card">
-                      <div className="wh-header">
-                        <IconWarehouse size={22} className="text-purple" />
-                        <span className="wh-code">{wh.code}</span>
-                      </div>
-                      <h3>{wh.name}</h3>
-                      <p className="wh-location">{wh.location}</p>
-                      <div className="wh-stats">
-                        <span>Status: <strong className="text-green">Active</strong></span>
-                        <span>Facility ID: <strong>#{wh.id}</strong></span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+          {activeTab === 'adjustments' && (
+            <AdjustmentList />
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="view-container">
+              <WarehouseSettings />
             </div>
           )}
 
           {activeTab === 'transfers' && (
             <div className="view-container">
               <TransferList onOpenTransfer={(id) => navigate(`/transfers/${id}`)} />
-            </div>
-          )}
-
-          {(activeTab === 'adjustments' || activeTab === 'settings') && (
-            <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading" style={{ textTransform: 'capitalize' }}>{activeTab}</h1>
-                  <p className="page-subheading">Configured for active warehouse operations.</p>
-                </div>
-              </div>
-              <div className="empty-module-card">
-                <IconAdjust size={36} className="text-purple" />
-                <h3>{activeTab.toUpperCase()} Module Ready</h3>
-                <p>This module UI shell is active and ready to link with backend migration controllers.</p>
-              </div>
             </div>
           )}
         </main>
