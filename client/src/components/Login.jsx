@@ -86,6 +86,18 @@ function Login({ onLogin }) {
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? <><span className="spinner"></span>Signing in...</> : 'Sign In'}
           </button>
+
+          <button
+            type="button"
+            className="btn-action-secondary"
+            style={{ width: '100%', marginTop: '10px', padding: '9px', justifyContent: 'center' }}
+            onClick={() => {
+              setLoginId('admin1');
+              setPassword('Password1!');
+            }}
+          >
+            🔑 Fill Demo Admin Credentials
+          </button>
         </form>
 
         <div className="auth-toggle">

@@ -11,7 +11,7 @@ import './index.css';
 import './App.css';
 
 export default function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
 
   const handleLogin = (newToken, user) => {
     localStorage.setItem('token', newToken);
@@ -45,34 +45,46 @@ export default function App() {
             element={token ? <Navigate to="/dashboard" replace /> : <Signup onLogin={handleLogin} />}
           />
 
-          {/* Core Dashboard & Products */}
+          {/* Core Dashboard & Operations with Full Layout (Protected) */}
           <Route
             path="/dashboard"
-            element={token ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" replace />}
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="dashboard" /> : <Navigate to="/login" replace />}
           />
           <Route
             path="/products"
             element={token ? <Dashboard onLogout={handleLogout} initialTab="products" /> : <Navigate to="/login" replace />}
           />
-
-          {/* Receipts Feature */}
           <Route
             path="/receipts"
-            element={<ReceiptsList />}
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="receipts" /> : <Navigate to="/login" replace />}
           />
-          <Route
-            path="/receipts/:id"
-            element={<ReceiptDetail />}
-          />
-
-          {/* Deliveries Feature */}
           <Route
             path="/deliveries"
-            element={<DeliveryList />}
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="deliveries" /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/ledger"
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="ledger" /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/warehouses"
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="warehouses" /> : <Navigate to="/login" replace />}
+          />
+
+          {/* Deep Detail Views (Protected) */}
+          <Route
+            path="/receipts/:id"
+            element={token ? <ReceiptDetail /> : <Navigate to="/login" replace />}
           />
           <Route
             path="/deliveries/:id"
-            element={<DeliveryDetail />}
+            element={token ? <DeliveryDetail /> : <Navigate to="/login" replace />}
+          />
+
+          {/* Catch-all fallback */}
+          <Route
+            path="*"
+            element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
           />
         </Routes>
       </div>
