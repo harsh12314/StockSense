@@ -15,13 +15,14 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Route mounts ─────────────────────────────────────────────────────────────
-app.use('/api/auth',       require('./routes/auth'));
-app.use('/api/deliveries', require('./routes/deliveries'));
-app.use('/api/receipts',   require('./routes/receipts'));
-app.use('/api/ref',        require('./routes/reference'));
-app.use('/api/products',   require('./routes/products'));
-app.use('/api/ledger',     require('./routes/moves'));
-app.use('/api/moves',      require('./routes/moves'));
+app.use('/api/auth',        require('./routes/auth'));
+app.use('/api/deliveries',  require('./routes/deliveries'));
+app.use('/api/receipts',    require('./routes/receipts'));
+app.use('/api/ref',         require('./routes/reference'));
+app.use('/api/products',    require('./routes/products'));
+app.use('/api/adjustments', require('./routes/adjustments'));
+app.use('/api/ledger',      require('./routes/moves'));
+app.use('/api/moves',       require('./routes/moves'));
 
 // ── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -42,4 +43,3 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 StockSense server running on http://localhost:${PORT}`));
-

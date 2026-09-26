@@ -7,6 +7,7 @@ import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
 import StockLedger from '../features/ledger/StockLedger';
+import AdjustmentList from '../features/adjustments/AdjustmentList';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
@@ -675,7 +676,11 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
             </div>
           )}
 
-          {(activeTab === 'transfers' || activeTab === 'adjustments' || activeTab === 'settings') && (
+          {activeTab === 'adjustments' && (
+            <AdjustmentList />
+          )}
+
+          {(activeTab === 'transfers' || activeTab === 'settings') && (
             <div className="view-container">
               <div className="view-header">
                 <div>
