@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/auth` 
-  : 'http://localhost:3001/api/auth';
+  : 'http://localhost:4000/api/auth';
 
 function Signup({ onLogin }) {
   const [loginId, setLoginId] = useState('');
@@ -74,7 +74,7 @@ function Signup({ onLogin }) {
 
       onLogin(data.data.token, data.data.user);
     } catch (err) {
-      setError('Unable to connect to the server. Make sure the backend is running on port 5000.');
+      setError('Unable to connect to the server. Make sure the backend is running on port 4000.');
       setLoading(false);
     }
   };

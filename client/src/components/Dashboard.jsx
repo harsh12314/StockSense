@@ -26,6 +26,7 @@ import {
   INITIAL_ACTIVITIES,
 } from '../services/mockData';
 import DeliveryList from '../features/deliveries/DeliveryList';
+import ReceiptsList from '../features/receipts/ReceiptsList';
 
 export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [user, setUser] = useState(() => {
@@ -507,45 +508,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'receipts' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Receipts (Incoming Goods)</h1>
-                  <p className="page-subheading">Track vendor arrivals, inspect quantities, and validate into stock.</p>
-                </div>
-                <button
-                  className="action-btn btn-action-primary"
-                  onClick={() => showNotice('New Receipt form dialog will integrate with Receipts API.')}
-                >
-                  <IconPlus size={16} /> New Receipt
-                </button>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>From (Vendor)</th>
-                      <th>To (Location)</th>
-                      <th>Contact</th>
-                      <th>Scheduled</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {receipts.map((r) => (
-                      <tr key={r.id}>
-                        <td><span className="code-pill">{r.reference}</span></td>
-                        <td className="font-semibold">{r.from}</td>
-                        <td>{r.to}</td>
-                        <td>{r.contact}</td>
-                        <td>{r.scheduledDate} {r.isLate && <span className="late-tag">LATE</span>}</td>
-                        <td><StatusBadge status={r.status} isLate={r.isLate} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ReceiptsList />
             </div>
           )}
 

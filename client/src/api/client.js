@@ -3,7 +3,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL.replace(/\/auth\/?$/, '')
-  : 'http://localhost:3001/api';
+  : 'http://localhost:4000/api';
 
 export function getToken() {
   return localStorage.getItem('token');
@@ -100,24 +100,34 @@ export async function del(endpoint) {
   return request(endpoint, { method: 'DELETE' });
 }
 
-// Compact helper object returning json.data directly for modular feature APIs
-export const api = {
-  get: async (path) => {
-    const res = await request(path, { method: 'GET' });
-    return res && res.data !== undefined ? res.data : res;
-  },
-  post: async (path, body) => {
-    const res = await request(path, { method: 'POST', body });
-    return res && res.data !== undefined ? res.data : res;
-  },
-  put: async (path, body) => {
-    const res = await request(path, { method: 'PUT', body });
-    return res && res.data !== undefined ? res.data : res;
-  },
-  delete: async (path) => {
-    const res = await request(path, { method: 'DELETE' });
-    return res && res.data !== undefined ? res.data : res;
-  },
+// Universal helper: callable function AND object with method verbs
+export async function api(endpoint, options = {}) {
+  return request(endpoint, options);
+}
+
+api.get = async (path, params) => {
+  const res = await get(path, params);
+  return res && res.data !== undefined ? res.data : res;
+};
+
+api.post = async (path, body) => {
+  const res = await post(path, body);
+  return res && res.data !== undefined ? res.data : res;
+};
+
+api.put = async (path, body) => {
+  const res = await put(path, body);
+  return res && res.data !== undefined ? res.data : res;
+};
+
+api.patch = async (path, body) => {
+  const res = await patch(path, body);
+  return res && res.data !== undefined ? res.data : res;
+};
+
+api.delete = async (path) => {
+  const res = await del(path);
+  return res && res.data !== undefined ? res.data : res;
 };
 
 export default {
@@ -130,3 +140,4 @@ export default {
   getToken,
   getUser,
 };
+
