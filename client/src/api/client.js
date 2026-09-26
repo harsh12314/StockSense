@@ -2,28 +2,32 @@
 // Shared API wrapper for all fetch calls to the StockSense backend.
 // Automatically attaches JWT and follows the { success, data } envelope.
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export function getToken() {
-  return localStorage.getItem('stocksense_token');
+  return localStorage.getItem('stocksense_token') || localStorage.getItem('token');
 }
 
 export function setToken(token) {
   localStorage.setItem('stocksense_token', token);
+  localStorage.setItem('token', token);
 }
 
 export function clearToken() {
   localStorage.removeItem('stocksense_token');
   localStorage.removeItem('stocksense_user');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
 }
 
 export function getUser() {
-  const raw = localStorage.getItem('stocksense_user');
+  const raw = localStorage.getItem('stocksense_user') || localStorage.getItem('user');
   return raw ? JSON.parse(raw) : { id: 1, login_id: 'admin1', role: 'inventory_manager' };
 }
 
 export function setUser(user) {
   localStorage.setItem('stocksense_user', JSON.stringify(user));
+  localStorage.setItem('user', JSON.stringify(user));
 }
 
 // Auto-authenticate with the seeded admin account if no token exists

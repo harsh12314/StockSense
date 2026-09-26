@@ -1,7 +1,7 @@
 // server/src/routes/deliveries.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authenticateToken: auth } = require('../middleware/auth');
 const controller = require('../controllers/deliveriesController');
 
 // List & stats

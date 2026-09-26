@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/connection');
-const auth = require('../middleware/auth');
+const { authenticateToken: auth } = require('../middleware/auth');
 
 // GET /api/ref/products — list products for dropdown/search
 router.get('/products', auth, async (req, res) => {

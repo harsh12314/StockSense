@@ -24,6 +24,7 @@ import {
   INITIAL_DELIVERIES,
   INITIAL_ACTIVITIES,
 } from '../services/mockData';
+import DeliveryList from '../features/deliveries/DeliveryList';
 
 export default function Dashboard({ onLogout }) {
   const [user, setUser] = useState(() => {
@@ -593,45 +594,7 @@ export default function Dashboard({ onLogout }) {
 
           {activeTab === 'deliveries' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Delivery Orders (Outgoing Goods)</h1>
-                  <p className="page-subheading">Fulfill customer shipments, pick & pack items, and decrease stock upon validation.</p>
-                </div>
-                <button
-                  className="action-btn btn-action-primary"
-                  onClick={() => showNotice('New Delivery Order dialog will integrate with Deliveries API.')}
-                >
-                  <IconPlus size={16} /> New Delivery
-                </button>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>From (Location)</th>
-                      <th>To (Customer)</th>
-                      <th>Contact</th>
-                      <th>Scheduled</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deliveries.map((d) => (
-                      <tr key={d.id}>
-                        <td><span className="code-pill">{d.reference}</span></td>
-                        <td>{d.from}</td>
-                        <td className="font-semibold">{d.to}</td>
-                        <td>{d.contact}</td>
-                        <td>{d.scheduledDate} {d.isLate && <span className="late-tag">LATE</span>}</td>
-                        <td><StatusBadge status={d.status} isLate={d.isLate} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DeliveryList />
             </div>
           )}
 

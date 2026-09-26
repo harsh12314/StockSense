@@ -4,8 +4,9 @@
  * Run: npm run seed (after running all migration SQL files)
  */
 const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
-require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 async function seed() {
   const conn = await mysql.createConnection({
