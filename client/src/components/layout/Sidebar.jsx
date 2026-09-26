@@ -46,7 +46,8 @@ export default function Sidebar({
       id: 'transfers',
       label: 'Internal Transfers',
       icon: IconTransfer,
-      badge: null,
+      badge: counts.pendingTransfers || null,
+      badgeColor: 'blue',
     },
     {
       id: 'adjustments',

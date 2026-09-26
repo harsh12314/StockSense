@@ -20,6 +20,7 @@ app.use('/api/deliveries',  require('./routes/deliveries'));
 app.use('/api/receipts',    require('./routes/receipts'));
 app.use('/api/ref',         require('./routes/reference'));
 app.use('/api/products',    require('./routes/products'));
+app.use('/api/transfers',   require('./routes/transfers'));
 app.use('/api/adjustments', require('./routes/adjustments'));
 app.use('/api/ledger',      require('./routes/moves'));
 app.use('/api/moves',       require('./routes/moves'));

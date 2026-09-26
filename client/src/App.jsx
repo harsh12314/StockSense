@@ -7,6 +7,7 @@ import ReceiptsList from './features/receipts/ReceiptsList';
 import ReceiptDetail from './features/receipts/ReceiptDetail';
 import DeliveryList from './features/deliveries/DeliveryList';
 import DeliveryDetail from './features/deliveries/DeliveryDetail';
+import TransferDetail from './features/transfers/TransferDetail';
 import './index.css';
 import './App.css';
 
@@ -63,6 +64,10 @@ export default function App() {
             element={token ? <Dashboard onLogout={handleLogout} initialTab="deliveries" /> : <Navigate to="/login" replace />}
           />
           <Route
+            path="/transfers"
+            element={token ? <Dashboard onLogout={handleLogout} initialTab="transfers" /> : <Navigate to="/login" replace />}
+          />
+          <Route
             path="/ledger"
             element={token ? <Dashboard onLogout={handleLogout} initialTab="ledger" /> : <Navigate to="/login" replace />}
           />
@@ -95,6 +100,10 @@ export default function App() {
           <Route
             path="/deliveries/:id"
             element={token ? <DeliveryDetail /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/transfers/:id"
+            element={token ? <TransferDetail /> : <Navigate to="/login" replace />}
           />
 
           {/* Catch-all fallback */}

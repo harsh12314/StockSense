@@ -6,11 +6,13 @@ import StatusBadge from './common/StatusBadge';
 import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
+import TransferList from '../features/transfers/TransferList';
 import StockLedger from '../features/ledger/StockLedger';
 import AdjustmentList from '../features/adjustments/AdjustmentList';
 import WarehouseSettings from '../features/settings/WarehouseSettings';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
+import CreateTransferModal from '../features/transfers/CreateTransferModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
 import { get } from '../api/client';
 import {
@@ -27,6 +29,7 @@ import {
   IconSearch,
   IconHistory,
   IconWarehouse,
+  IconTransfer,
 } from './common/Icons';
 
 export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
@@ -47,6 +50,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   // Modal states for Quick Actions
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [creatingReceipt, setCreatingReceipt] = useState(false);
 
   // 100% Live database data states
@@ -54,6 +58,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [receipts, setReceipts] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
+  const [transferStats, setTransferStats] = useState({});
   const [activities, setActivities] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [actionNotice, setActionNotice] = useState(null);
@@ -80,19 +85,21 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   // Fetch live operational data from backend MySQL database
   const loadDashboardData = useCallback(async () => {
     try {
-      const [prodRes, recRes, delRes, statsRes, whRes, movesRes] = await Promise.all([
+      const [prodRes, recRes, delRes, statsRes, whRes, movesRes, transStatsRes] = await Promise.all([
         get('/products').catch(() => ({ data: [] })),
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
         get('/settings/warehouses').catch(() => get('/ref/warehouses')).catch(() => ({ data: [] })),
         get('/ledger?limit=30').catch(() => get('/moves?limit=30')).catch(() => get('/ref/moves')).catch(() => ({ data: [] })),
+        get('/transfers/stats').catch(() => ({ data: {} })),
       ]);
 
       if (prodRes?.data) setProducts(prodRes.data);
       if (recRes?.data) setReceipts(recRes.data);
       if (delRes?.data) setDeliveries(delRes.data);
       if (statsRes?.data) setDeliveryStats(statsRes.data);
+      if (transStatsRes?.data) setTransferStats(transStatsRes.data);
 
       if (whRes?.data && whRes.data.length > 0) {
         setWarehouses(whRes.data.map(w => ({
@@ -109,7 +116,8 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         const formattedMoves = movesRes.data.map((m) => {
           const isIncoming = (m.direction || '').toLowerCase() === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock' || m.to_location === 'WH/STOCK';
           const isAdjustment = m.reference?.startsWith('ADJ') || m.contact === 'Stock Adjustment';
-          const actType = isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
+          const isTransfer = m.reference?.includes('/TRANS/') || m.contact === 'Internal Transfer';
+          const actType = isTransfer ? 'TRANS' : isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
 
           let timeStr = 'Recent';
           if (m.move_date) {
@@ -128,10 +136,10 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
             time: timeStr,
             product: m.product_name || m.product || `Product #${m.product_id}`,
             sku: m.product_sku || '',
-            qty: `${actType === 'IN' ? '+' : '-'}${m.quantity} ${m.unit_of_measure || m.uom || 'units'}`,
+            qty: `${isTransfer ? '⇄ ' : actType === 'IN' ? '+' : '-'}${m.quantity} ${m.unit_of_measure || m.uom || 'units'}`,
             rawQty: m.quantity,
+            location: isTransfer ? `${m.from_location} → ${m.to_location}` : (m.to_location || m.from_location || 'Stock'),
             contact: m.contact || (isIncoming ? 'Supplier' : 'Customer'),
-            location: m.to_location || m.from_location || 'Stock',
             status: m.status || 'done',
           };
         });
@@ -220,6 +228,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           totalProducts: products.length,
           pendingReceipts: pendingReceipts.length,
           pendingDeliveries: pendingDeliveries.length,
+          pendingTransfers: transferStats?.draft_count || 0,
         }}
       />
 
@@ -272,6 +281,14 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   >
                     <IconTruck size={16} />
                     <span>+ New Delivery</span>
+                  </button>
+
+                  <button
+                    className="action-btn btn-action-secondary"
+                    onClick={() => setIsTransferModalOpen(true)}
+                  >
+                    <IconTransfer size={16} />
+                    <span>+ Transfer</span>
                   </button>
 
                   <button
@@ -663,17 +680,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'transfers' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading" style={{ textTransform: 'capitalize' }}>Transfers</h1>
-                  <p className="page-subheading">Configured for active warehouse operations.</p>
-                </div>
-              </div>
-              <div className="empty-module-card">
-                <IconAdjust size={36} className="text-purple" />
-                <h3>TRANSFERS Module Ready</h3>
-                <p>This module UI shell is active and ready to link with backend migration controllers.</p>
-              </div>
+              <TransferList onOpenTransfer={(id) => navigate(`/transfers/${id}`)} />
             </div>
           )}
         </main>
@@ -688,6 +695,18 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           setIsDeliveryModalOpen(false);
           if (newDelivery && newDelivery.id) {
             navigate(`/deliveries/${newDelivery.id}`);
+          }
+        }}
+      />
+
+      <CreateTransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        onCreated={(newTransfer) => {
+          loadDashboardData();
+          setIsTransferModalOpen(false);
+          if (newTransfer && newTransfer.id) {
+            navigate(`/transfers/${newTransfer.id}`);
           }
         }}
       />
