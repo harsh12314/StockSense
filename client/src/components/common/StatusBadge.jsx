@@ -3,59 +3,59 @@ import React from 'react';
 const STATUS_CONFIG = {
   draft: {
     label: 'Draft',
-    bg: '#252321',
-    color: '#d6cfc7',
-    border: '#3c3833',
-    dot: '#a8a196',
+    bg: 'rgba(100, 116, 139, 0.08)',
+    color: '#64748B',
+    border: '#64748B',
+    dot: '#64748B',
   },
   waiting: {
     label: 'Waiting',
-    bg: '#2c2214',
-    color: '#fbbf24',
-    border: '#4a371c',
-    dot: '#f59e0b',
+    bg: 'rgba(217, 119, 6, 0.08)',
+    color: '#D97706',
+    border: '#D97706',
+    dot: '#D97706',
   },
   ready: {
     label: 'Ready',
-    bg: '#142538',
-    color: '#7dd3fc',
-    border: '#1e3d5c',
-    dot: '#38bdf8',
+    bg: 'rgba(74, 144, 226, 0.08)',
+    color: '#4A90E2',
+    border: '#4A90E2',
+    dot: '#4A90E2',
   },
   done: {
     label: 'Done',
-    bg: '#13281a',
-    color: '#86efac',
-    border: '#1f482a',
-    dot: '#22c55e',
+    bg: 'rgba(34, 197, 94, 0.08)',
+    color: '#16A34A',
+    border: '#22C55E',
+    dot: '#22C55E',
   },
   canceled: {
     label: 'Canceled',
-    bg: '#2d1818',
-    color: '#fca5a5',
-    border: '#4d2222',
-    dot: '#ef4444',
+    bg: 'rgba(239, 68, 68, 0.08)',
+    color: '#DC2626',
+    border: '#EF4444',
+    dot: '#EF4444',
   },
   late: {
     label: 'Late',
-    bg: '#33151f',
-    color: '#fda4af',
-    border: '#541d2e',
-    dot: '#f43f5e',
+    bg: 'rgba(239, 68, 68, 0.08)',
+    color: '#DC2626',
+    border: '#EF4444',
+    dot: '#EF4444',
   },
   in: {
     label: 'In',
-    bg: '#13281a',
-    color: '#86efac',
-    border: '#1f482a',
-    dot: '#22c55e',
+    bg: 'rgba(34, 197, 94, 0.08)',
+    color: '#16A34A',
+    border: '#22C55E',
+    dot: '#22C55E',
   },
   out: {
     label: 'Out',
-    bg: '#2d1818',
-    color: '#fca5a5',
-    border: '#4d2222',
-    dot: '#ef4444',
+    bg: 'rgba(239, 68, 68, 0.08)',
+    color: '#DC2626',
+    border: '#EF4444',
+    dot: '#EF4444',
   },
 };
 
@@ -66,16 +66,28 @@ export default function StatusBadge({ status, text, isLate = false, className = 
 
   return (
     <span
-      className={`status-badge ${className}`}
+      className={`status-badge ${className}`.trim()}
       style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '4px 12px',
+        borderRadius: '9999px',
+        fontSize: '11.5px',
+        fontWeight: '600',
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
         backgroundColor: isLate ? STATUS_CONFIG.late.bg : config.bg,
         color: isLate ? STATUS_CONFIG.late.color : config.color,
-        borderColor: isLate ? STATUS_CONFIG.late.border : config.border,
+        border: `1.5px solid ${isLate ? STATUS_CONFIG.late.border : config.border}`,
       }}
     >
       <span
         className="status-dot"
         style={{
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
           backgroundColor: isLate ? STATUS_CONFIG.late.dot : config.dot,
         }}
       />
@@ -83,3 +95,4 @@ export default function StatusBadge({ status, text, isLate = false, className = 
     </span>
   );
 }
+

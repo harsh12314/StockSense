@@ -2,27 +2,60 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  border: none;
-  transition: background 0.15s, opacity 0.15s;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13.5px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  cursor: pointer;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.primary   { background: var(--color-primary);   color: #fff; }
-.primary:hover:not(:disabled)   { background: var(--color-primary-hover); }
+.primary {
+  background: #4A90E2;
+  color: #fff;
+  border-color: #4A90E2;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.28);
+}
+.primary:hover:not(:disabled) {
+  background: #3B7DC4;
+  border-color: #3B7DC4;
+}
 
-.secondary { background: var(--color-border); color: var(--color-text); }
-.secondary:hover:not(:disabled) { background: #d1d5db; }
+.secondary {
+  background: #FFFFFF;
+  color: #334155;
+  border-color: #CBD5E1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.secondary:hover:not(:disabled) {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
 
-.danger    { background: var(--color-danger);    color: #fff; }
-.danger:hover:not(:disabled)    { background: var(--color-danger-hover); }
+.danger {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+.danger:hover:not(:disabled) {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
 
-.ghost     { background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); }
-.ghost:hover:not(:disabled)     { background: #ede9fe; }
+.ghost {
+  background: transparent;
+  color: #4A90E2;
+  border-color: transparent;
+}
+.ghost:hover:not(:disabled) {
+  background: #EBF3FC;
+}
 
-.sm { padding: 4px 10px; font-size: 12px; }
-.lg { padding: 10px 22px; font-size: 15px; }
+.sm { padding: 6px 14px; font-size: 12px; border-radius: 8px; }
+.lg { padding: 12px 26px; font-size: 15px; border-radius: 12px; }
