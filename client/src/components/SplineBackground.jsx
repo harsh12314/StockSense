@@ -4,7 +4,7 @@ import Spline from '@splinetool/react-spline';
 
 export default function SplineBackground({
   scene = 'https://prod.spline.design/LHB9hInitRb0kDY1/scene.splinecode',
-  showBranding = true,
+  showBranding = false,
 }) {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -110,19 +110,19 @@ export default function SplineBackground({
         />
       ) : null}
 
-      {/* Visual dark vignette / glass gradient overlay to ensure card contrast */}
+      {/* Light-blue translucent ambient wash to preserve light theme while letting 3D models show */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(circle at center, rgba(15, 23, 42, 0.35) 0%, rgba(9, 13, 22, 0.72) 100%)',
+            'radial-gradient(circle at 65% 50%, rgba(240, 245, 252, 0.65) 0%, rgba(235, 243, 252, 0.86) 100%)',
           pointerEvents: 'none',
           zIndex: 1,
         }}
       />
 
-      {/* StockSense Brand Hero Overlay */}
+      {/* StockSense Brand Hero Overlay (if enabled) */}
       {showBranding && (
         <div className="auth-hero-branding">
           <div className="auth-hero-badge">

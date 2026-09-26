@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import SplineBackground from './SplineBackground';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/auth\/?$/, '') + '/auth';
 
-function Login({ onLogin }) {
+export default function Login({ onLogin }) {
+  const navigate = useNavigate();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,83 +35,164 @@ function Login({ onLogin }) {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.error?.message || 'Login failed. Please try again.');
+        setError(data.error?.message || 'Login failed. Please verify your credentials.');
         setLoading(false);
         return;
       }
 
       onLogin(data.data.token, data.data.user);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError('Unable to connect to the server. Make sure the backend is running on port 4000.');
       setLoading(false);
     }
   };
 
+  const handleFillDemo = () => {
+    setLoginId('admin1');
+    setPassword('Password1!');
+    setError('');
+  };
+
   return (
     <div className="auth-page">
-      <SplineBackground scene="https://prod.spline.design/LHB9hInitRb0kDY1/scene.splinecode" />
-      <div className="auth-card">
-        <h1>Welcome back</h1>
-        <p className="subtitle">Sign in to your account to continue</p>
+      {/* 3D Spline background preserved in background without obstruction */}
+      <SplineBackground scene="https://prod.spline.design/LHB9hInitRb0kDY1/scene.splinecode" showBranding={false} />
 
-        {error && (
-          <div className="error-message">
-            <span className="error-icon">⚠️</span>
-            <p>{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="login-id">Login ID</label>
-            <input
-              id="login-id"
-              type="text"
-              placeholder="Enter your Login ID"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              required
-            />
+      <div className="auth-wrapper">
+        {/* Left Hero Column */}
+        <div className="auth-hero-section">
+          <div className="auth-hero-badge">
+            <span className="auth-badge-dot" />
+            <span>INTELLIGENT LOGISTICS ERP</span>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <h1 className="auth-hero-title">
+            STOCK<br />
+            <span className="brand-highlight">SENSE</span>
+          </h1>
+
+          <div className="auth-hero-quote">
+            <p>&ldquo;Know what you have, where it is, before it&apos;s a problem.&rdquo;</p>
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? <><span className="spinner"></span>Signing in...</> : 'Sign In'}
-          </button>
-
-          <button
-            type="button"
-            className="btn-action-secondary"
-            style={{ width: '100%', marginTop: '10px', padding: '9px', justifyContent: 'center' }}
-            onClick={() => {
-              setLoginId('admin1');
-              setPassword('Password1!');
-            }}
-          >
-            🔑 Fill Demo Admin Credentials
-          </button>
-        </form>
-
-        <div className="auth-toggle">
-          <p>
-            Don't have an account?{' '}
-            <Link to="/signup">Sign Up</Link>
-          </p>
+          {/* Logistics Graphic Banner */}
+          <div className="auth-hero-card">
+            <div className="auth-hero-card-pattern" />
+            <div className="auth-hero-emojis">
+              <span role="img" aria-label="Cargo Ship">🚢</span>
+              <span role="img" aria-label="Logistics Crane">🏗️</span>
+              <span role="img" aria-label="Inventory Box">📦</span>
+              <span role="img" aria-label="Delivery Truck">🚚</span>
+            </div>
+          </div>
         </div>
+
+        {/* Right Form Card */}
+        <div className="auth-card">
+          {/* Segmented Tab Switcher */}
+          <div className="auth-tab-switcher">
+            <button
+              type="button"
+              className="auth-tab-btn active"
+              onClick={() => navigate('/login')}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className="auth-tab-btn"
+              onClick={() => navigate('/signup')}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <div className="auth-card-header">
+            <h1 className="auth-title">Welcome back</h1>
+            <p className="auth-subtitle">Sign in to your account to continue</p>
+          </div>
+
+          {error && (
+            <div className="auth-error-box">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="auth-field-group">
+              <label htmlFor="login-id">Login ID</label>
+              <div className="auth-input-wrapper">
+                <User size={18} className="auth-input-icon" />
+                <input
+                  id="login-id"
+                  type="text"
+                  placeholder="Enter your Login ID"
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
+                  autoComplete="username"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="auth-field-group">
+              <label htmlFor="login-password">Password</label>
+              <div className="auth-input-wrapper">
+                <Lock size={18} className="auth-input-icon" />
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="auth-btn-primary" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="auth-btn-spinner" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="auth-btn-demo"
+              onClick={handleFillDemo}
+            >
+              🔑 Fill Demo Admin Credentials
+            </button>
+          </form>
+
+          <div className="auth-footer-link">
+            <p>
+              Don&apos;t have an account?{' '}
+              <Link to="/signup">Sign Up</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="auth-demo-badge">
+        <span>Demo — polished styling, live auth</span>
       </div>
     </div>
   );
 }
-
-export default Login;
