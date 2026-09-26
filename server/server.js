@@ -18,6 +18,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes — each feature mounts its own router here
 app.use('/api/auth', authRoutes);
+app.use('/api/products', require('./src/routes/products'));
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {
