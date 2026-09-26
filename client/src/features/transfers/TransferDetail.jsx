@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { transfersApi } from './transfersApi';
 import StatusBadge from '../../components/StatusBadge';
+import PrintSlip from '../../components/PrintSlip';
 import './Transfers.css';
 
 export default function TransferDetail() {
@@ -749,166 +750,13 @@ export default function TransferDetail() {
         </div>
       )}
 
-      {/* Print Slip Modal */}
-      {isPrintModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px',
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsPrintModalOpen(false);
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: '640px',
-              backgroundColor: '#ffffff',
-              color: '#0f172a',
-              borderRadius: '12px',
-              padding: '32px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                borderBottom: '2px solid #e2e8f0',
-                paddingBottom: '16px',
-                marginBottom: '20px',
-              }}
-            >
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#0f172a' }}>
-                  INTERNAL TRANSFER SLIP
-                </h2>
-                <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>
-                  StockSense Logistics & Warehouse Operations
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 800,
-                    fontFamily: 'monospace',
-                    color: '#4f46e5',
-                  }}
-                >
-                  {transfer.reference}
-                </span>
-                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Status: {transfer.status.toUpperCase()}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '16px',
-                marginBottom: '24px',
-                fontSize: '0.85rem',
-              }}
-            >
-              <div>
-                <strong>Source:</strong> {transfer.from_location} ({transfer.from_warehouse_name})
-                <br />
-                <strong>Destination:</strong> {transfer.to_location} ({transfer.to_warehouse_name})
-              </div>
-              <div>
-                <strong>Date:</strong>{' '}
-                {transfer.transfer_date
-                  ? new Date(transfer.transfer_date).toLocaleDateString()
-                  : 'N/A'}
-                <br />
-                <strong>Responsible:</strong> {transfer.responsible || 'Admin'}
-              </div>
-            </div>
-
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '0.85rem',
-                marginBottom: '30px',
-              }}
-            >
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #cbd5e1' }}>
-                  <th style={{ textAlign: 'left', padding: '8px' }}>Product</th>
-                  <th style={{ textAlign: 'left', padding: '8px' }}>SKU</th>
-                  <th style={{ textAlign: 'right', padding: '8px' }}>Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(transfer.lines || []).map((l, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px' }}>{l.product_name}</td>
-                    <td style={{ padding: '8px', color: '#64748b' }}>{l.sku}</td>
-                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 700 }}>
-                      {l.quantity} {l.unit_of_measure}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-end',
-                marginTop: '40px',
-              }}
-            >
-              <div style={{ borderTop: '1px solid #94a3b8', width: '200px', textAlign: 'center', paddingTop: '6px', fontSize: '0.75rem', color: '#64748b' }}>
-                Warehouse Operator Signature
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsPrintModalOpen(false)}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: '#4f46e5',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Print Document
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Formal Internal Transfer Manifest Generator */}
+      <PrintSlip
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        data={transfer}
+        type="transfer"
+      />
     </div>
   );
 }

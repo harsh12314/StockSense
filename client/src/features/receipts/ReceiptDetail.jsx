@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { receiptsApi } from './receiptsApi';
 import StatusBadge from '../../components/StatusBadge';
 import Button      from '../../components/Button';
+import PrintSlip   from '../../components/PrintSlip';
 import './Receipts.css';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -216,6 +217,7 @@ export default function ReceiptDetail() {
   const [receipt, setReceipt]     = useState(null);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [busy, setBusy]           = useState(false);
   const [toast, setToast]         = useState(null);
 
@@ -317,8 +319,8 @@ export default function ReceiptDetail() {
               </Button>
             )}
             {isDone && (
-              <Button variant="secondary" onClick={() => window.print()}>
-                🖨 Print
+              <Button variant="secondary" onClick={() => setIsPrintModalOpen(true)}>
+                🖨 Print Slip
               </Button>
             )}
           </div>
@@ -452,6 +454,14 @@ export default function ReceiptDetail() {
 
       {showModal && <AddProductModal onAdd={handleAddLine} onClose={() => setShowModal(false)} />}
       {toast && <Toast message={toast.message} type={toast.type} />}
+
+      {/* Formal Goods Receipt Voucher Generator */}
+      <PrintSlip
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        data={receipt}
+        type="receipt"
+      />
     </div>
   );
 }

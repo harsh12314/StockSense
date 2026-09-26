@@ -16,13 +16,103 @@ import {
   Calendar,
   Layers,
   Check,
-  Sparkles,
-  History
+  RefreshCw,
+  History,
+  AlertCircle,
+  ShieldCheck,
+  Truck
 } from 'lucide-react';
 import { get, post, del, api } from '../../api/client';
-import StatusBadge from '../../components/StatusBadge';
 import StatusStepper from '../../components/StatusStepper';
 import Modal from '../../components/Modal';
+import PrintSlip from '../../components/PrintSlip';
+
+/* ── Status helpers ─────────────────────────────────────────────────── */
+const STATUS_META = {
+  draft:    { label: 'Draft',    color: '#94a3b8', bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)' },
+  waiting:  { label: 'Waiting',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)'   },
+  ready:    { label: 'Ready',    color: '#38bdf8', bg: 'rgba(14,165,233,0.12)',  border: 'rgba(14,165,233,0.3)'   },
+  done:     { label: 'Done',     color: '#34d399', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)'   },
+  canceled: { label: 'Canceled', color: '#f87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)'   },
+};
+
+function StatusBadge({ status }) {
+  const meta = STATUS_META[status] || STATUS_META.draft;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '5px',
+      padding: '4px 12px', borderRadius: '99px',
+      backgroundColor: meta.bg, border: `1px solid ${meta.border}`,
+      color: meta.color, fontSize: '0.78rem', fontWeight: 700,
+      textTransform: 'capitalize', letterSpacing: '0.02em',
+    }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: meta.color, display: 'inline-block' }} />
+      {meta.label}
+    </span>
+  );
+}
+
+/* ── Meta Info Cell ─────────────────────────────────────────────────── */
+function MetaField({ icon: Icon, label, value, sub }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <Icon size={12} /> {label}
+      </div>
+      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#f1f5f9' }}>{value || '—'}</div>
+      {sub && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ── Notify Banner ──────────────────────────────────────────────────── */
+function NotifyBanner({ type, message, onClose }) {
+  if (!message) return null;
+  const isSuccess = type === 'success';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between',
+      padding: '12px 18px', borderRadius: '10px', marginBottom: '16px', fontWeight: 600,
+      backgroundColor: isSuccess ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+      border: `1px solid ${isSuccess ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+      color: isSuccess ? '#34d399' : '#f87171',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {isSuccess ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+        <span style={{ fontSize: '0.875rem' }}>{message}</span>
+      </div>
+      {onClose && (
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.7 }}>✕</button>
+      )}
+    </div>
+  );
+}
+
+/* ── Workflow Step Card ──────────────────────────────────────────────── */
+function WorkflowStep({ step, label, desc, done, active }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px',
+      borderRadius: '10px', flex: 1,
+      backgroundColor: done ? 'rgba(16,185,129,0.08)' : active ? 'rgba(99,102,241,0.1)' : 'rgba(30,41,59,0.3)',
+      border: `1px solid ${done ? 'rgba(16,185,129,0.25)' : active ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.06)'}`,
+      transition: 'all 0.2s',
+    }}>
+      <div style={{
+        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+        backgroundColor: done ? '#10b981' : active ? '#6366f1' : 'rgba(100,116,139,0.2)',
+        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.8rem', fontWeight: 800,
+      }}>
+        {done ? '✓' : step}
+      </div>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: '0.875rem', color: done ? '#34d399' : active ? '#a5b4fc' : '#94a3b8' }}>{label}</div>
+        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{desc}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function DeliveryDetail() {
   const { id } = useParams();
@@ -34,22 +124,17 @@ export default function DeliveryDetail() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Pick & Pack local state tracking
   const [pickedLines, setPickedLines] = useState({});
   const [packedLines, setPackedLines] = useState({});
 
-  // Add line item modal state
   const [isAddLineOpen, setIsAddLineOpen] = useState(false);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [lineQuantity, setLineQuantity] = useState(1);
 
-  // Print Slip Modal
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadDelivery();
-  }, [id]);
+  useEffect(() => { loadDelivery(); }, [id]);
 
   async function loadDelivery() {
     setLoading(true);
@@ -57,15 +142,9 @@ export default function DeliveryDetail() {
     try {
       const res = await get(`/deliveries/${id}`);
       setDelivery(res.data);
-
-      // Initialize pick & pack states if already done
       if (res.data.status === 'done') {
-        const pState = {};
-        const pkState = {};
-        (res.data.lines || []).forEach(line => {
-          pState[line.id] = true;
-          pkState[line.id] = true;
-        });
+        const pState = {}, pkState = {};
+        (res.data.lines || []).forEach(l => { pState[l.id] = true; pkState[l.id] = true; });
         setPickedLines(pState);
         setPackedLines(pkState);
       }
@@ -86,15 +165,12 @@ export default function DeliveryDetail() {
           setSelectedProductId(String(prodRes.data[0].id));
         }
       }
-    } catch (e) {
-      console.warn('Failed to load products for line modal:', e);
-    }
+    } catch (e) { console.warn('Failed to load products:', e); }
   }
 
   async function handleAddLine(e) {
     e.preventDefault();
     if (!selectedProductId || lineQuantity <= 0) return;
-
     setActionLoading(true);
     try {
       await post(`/deliveries/${id}/lines`, {
@@ -102,14 +178,11 @@ export default function DeliveryDetail() {
         quantity: parseInt(lineQuantity, 10),
       });
       setIsAddLineOpen(false);
-      setSuccessMessage('Product line added successfully.');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      showSuccess('Product line added successfully.');
       await loadDelivery();
     } catch (err) {
-      alert(`Failed to add line: ${err.message}`);
-    } finally {
-      setActionLoading(false);
-    }
+      setError(`Failed to add line: ${err.message}`);
+    } finally { setActionLoading(false); }
   }
 
   async function handleRemoveLine(lineId) {
@@ -119,80 +192,68 @@ export default function DeliveryDetail() {
       await del(`/deliveries/${id}/lines/${lineId}`);
       await loadDelivery();
     } catch (err) {
-      alert(`Failed to remove line: ${err.message}`);
-    } finally {
-      setActionLoading(false);
-    }
+      setError(`Failed to remove line: ${err.message}`);
+    } finally { setActionLoading(false); }
   }
 
-  // 1. Pick Item
-  const togglePick = (lineId) => {
+  const togglePick = lineId => {
     if (delivery?.status === 'done' || delivery?.status === 'canceled') return;
     setPickedLines(prev => ({ ...prev, [lineId]: !prev[lineId] }));
   };
 
-  // 2. Pack Item
-  const togglePack = (lineId) => {
+  const togglePack = lineId => {
     if (delivery?.status === 'done' || delivery?.status === 'canceled') return;
     setPackedLines(prev => ({ ...prev, [lineId]: !prev[lineId] }));
   };
 
-  // Check Availability
   async function handleCheckAvailability() {
-    setActionLoading(true);
-    setError(null);
+    setActionLoading(true); setError(null);
     try {
       const res = await post(`/deliveries/${id}/check-availability`);
-      setSuccessMessage(res.data.message);
-      setTimeout(() => setSuccessMessage(null), 4000);
+      showSuccess(res.data.message);
       await loadDelivery();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
   }
 
-  // 3. Validate -> stock decreases automatically
   async function handleValidate() {
-    if (!window.confirm('Validate this Delivery Order? Stock will decrease automatically and move history will be recorded.')) {
-      return;
-    }
-
-    setActionLoading(true);
-    setError(null);
+    if (!window.confirm('Validate this Delivery? Stock will decrease automatically and move history will be recorded.')) return;
+    setActionLoading(true); setError(null);
     try {
       const res = await post(`/deliveries/${id}/validate`);
-      setSuccessMessage(res.data.message || 'Delivery validated successfully! Stock has decreased.');
+      showSuccess(res.data.message || 'Delivery validated! Stock has been decreased.');
       await loadDelivery();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
   }
 
-  // Cancel order
   async function handleCancel() {
-    if (!window.confirm('Are you sure you want to cancel this delivery order?')) return;
-    setActionLoading(true);
-    setError(null);
+    if (!window.confirm('Cancel this delivery order?')) return;
+    setActionLoading(true); setError(null);
     try {
       await post(`/deliveries/${id}/cancel`);
-      setSuccessMessage('Delivery order has been canceled.');
+      showSuccess('Delivery order canceled.');
       await loadDelivery();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
   }
 
+  function showSuccess(msg) {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(null), 4000);
+  }
+
+  /* ── Loading / Error ────────────────────────────────────────────── */
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
-        <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid #cbd5e1', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ marginTop: '14px', fontSize: '0.9rem' }}>Loading delivery details...</p>
+      <div style={{ textAlign: 'center', padding: '80px 0', color: '#64748b' }}>
+        <div style={{
+          display: 'inline-block', width: '36px', height: '36px',
+          border: '3px solid rgba(255,255,255,0.08)', borderTopColor: '#6366f1',
+          borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+        }} />
+        <p style={{ marginTop: '14px', fontSize: '0.9rem' }}>Loading delivery order…</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -200,11 +261,11 @@ export default function DeliveryDetail() {
   if (error && !delivery) {
     return (
       <div style={{ padding: '24px' }}>
-        <div style={{ padding: '16px 20px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px' }}>
-          <strong>Error loading delivery:</strong> {error}
+        <div style={{ padding: '16px 20px', backgroundColor: 'rgba(239,68,68,0.12)', color: '#f87171', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <AlertCircle size={20} /> <strong>Error:</strong> {error}
         </div>
-        <button type="button" className="btn btn-secondary" style={{ marginTop: '16px' }} onClick={() => navigate('/deliveries')}>
-          <ArrowLeft size={16} /> Back to Deliveries
+        <button type="button" onClick={() => navigate('/deliveries')} style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(30,41,59,0.7)', color: '#94a3b8', cursor: 'pointer' }}>
+          <ArrowLeft size={15} /> Back to Deliveries
         </button>
       </div>
     );
@@ -213,775 +274,454 @@ export default function DeliveryDetail() {
   const lines = delivery.lines || [];
   const allPicked = lines.length > 0 && lines.every(l => pickedLines[l.id]);
   const allPacked = lines.length > 0 && lines.every(l => packedLines[l.id]);
-  const hasOutOfStock = lines.some(l => l.out_of_stock || (l.stock_on_hand < l.quantity));
   const isEditable = ['draft', 'waiting'].includes(delivery.status);
   const isReady = delivery.status === 'ready';
   const isDone = delivery.status === 'done';
   const isCanceled = delivery.status === 'canceled';
 
+  const canValidate = isReady;
+
   return (
-    <div>
-      {/* Breadcrumb & Navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', fontSize: '0.85rem' }}>
-        <Link to="/deliveries" style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div style={{ width: '100%' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* ── Breadcrumb ─────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '0.82rem' }}>
+        <Link to="/deliveries" style={{ color: '#6366f1', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}>
           <ArrowLeft size={14} /> Delivery Orders
         </Link>
-        <span style={{ color: '#cbd5e1' }}>/</span>
-        <span style={{ color: '#0f172a', fontWeight: 600 }}>{delivery.reference}</span>
+        <span style={{ color: '#334155' }}>/</span>
+        <span style={{ color: '#94a3b8', fontFamily: 'monospace' }}>{delivery.reference}</span>
       </div>
 
-      {/* Top Banner / Notification */}
-      {successMessage && (
-        <div style={{
-          padding: '12px 18px',
-          backgroundColor: '#dcfce7',
-          color: '#15803d',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          border: '1px solid #bbf7d0'
-        }}>
-          <CheckCircle2 size={18} />
-          <span>{successMessage}</span>
-        </div>
-      )}
+      {/* ── Notifications ──────────────────────────────────────────── */}
+      <NotifyBanner type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
+      <NotifyBanner type="error" message={error} onClose={() => setError(null)} />
 
-      {error && (
-        <div style={{
-          padding: '12px 18px',
-          backgroundColor: '#fee2e2',
-          color: '#dc2626',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          fontWeight: 500,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          border: '1px solid #fecaca'
-        }}>
-          <AlertTriangle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Header Bar with Reference & Primary Actions */}
-      <div className="page-header" style={{ marginBottom: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h2 style={{ margin: 0 }}>{delivery.reference}</h2>
-            <StatusBadge status={delivery.status} />
+      {/* ── Page Header ────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0,
+            background: isDone
+              ? 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.2))'
+              : isCanceled
+              ? 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.2))'
+              : 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(59,130,246,0.25))',
+            border: `1px solid ${isDone ? 'rgba(16,185,129,0.3)' : isCanceled ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.3)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: isDone ? '#34d399' : isCanceled ? '#f87171' : '#818cf8',
+          }}>
+            <Truck size={22} />
           </div>
-          <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px' }}>
-            Destination: <strong>{delivery.to_contact || 'Customer'}</strong> — {delivery.operation_type || 'Delivery Orders'}
-          </p>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc', fontFamily: 'monospace', letterSpacing: '-0.01em' }}>
+                {delivery.reference}
+              </h1>
+              <StatusBadge status={delivery.status} />
+            </div>
+            <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+              {delivery.operation_type || 'Delivery Orders'} · {delivery.to_contact || 'Customer'}
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="page-header-actions">
-          {/* New / Reset order */}
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => navigate('/deliveries')}
-          >
-            All Orders
-          </button>
-
-          {/* Add Product Line (Draft/Waiting) */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {isEditable && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={openAddLineModal}
-              disabled={actionLoading}
-            >
-              <Plus size={14} /> Add Product
-            </button>
+            <>
+              <button type="button" onClick={openAddLineModal} disabled={actionLoading} style={btnSecStyle}>
+                <Plus size={14} /> Add Product
+              </button>
+              <button
+                type="button"
+                onClick={handleCheckAvailability}
+                disabled={actionLoading || lines.length === 0}
+                style={btnSecStyle}
+                title="Check stock and mark as Ready if available"
+              >
+                <ShieldCheck size={14} /> Check Availability
+              </button>
+            </>
           )}
 
-          {/* Check Availability */}
-          {isEditable && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={handleCheckAvailability}
-              disabled={actionLoading || lines.length === 0}
-              title="Verifies stock in warehouse. If all available, sets status to Ready."
-            >
-              Check Availability
-            </button>
-          )}
-
-          {/* Validate Button (Primary) */}
+          {/* Validate — primary CTA */}
           <button
             type="button"
-            className="btn btn-primary"
             onClick={handleValidate}
-            disabled={actionLoading || delivery.status !== 'ready'}
-            title={delivery.status === 'ready' ? 'Validate to automatically decrease stock and complete shipment' : 'Order must be in Ready status to validate'}
+            disabled={actionLoading || !canValidate}
             style={{
-              boxShadow: delivery.status === 'ready' ? '0 0 15px rgba(59,130,246,0.5)' : undefined
+              ...btnPrimaryStyle,
+              opacity: canValidate ? 1 : 0.4,
+              cursor: canValidate ? 'pointer' : 'not-allowed',
+              boxShadow: canValidate ? '0 4px 14px rgba(99,102,241,0.4)' : 'none',
             }}
+            title={canValidate ? 'Validate to dispatch & decrease stock' : 'Order must be Ready to validate'}
           >
-            <Check size={16} /> Validate (Decrease Stock)
+            {actionLoading ? <RefreshCw size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Check size={14} />}
+            Validate & Dispatch
           </button>
 
-          {/* Print Delivery Slip (Done only) */}
           {isDone && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setIsPrintModalOpen(true)}
-            >
-              <Printer size={16} /> Print Delivery Slip
+            <button type="button" onClick={() => setIsPrintModalOpen(true)} style={btnSecStyle}>
+              <Printer size={14} /> Print Slip
             </button>
           )}
 
-          {/* Cancel */}
           {!isDone && !isCanceled && (
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              onClick={handleCancel}
-              disabled={actionLoading}
-            >
+            <button type="button" onClick={handleCancel} disabled={actionLoading} style={btnDangerStyle}>
               <Ban size={14} /> Cancel
             </button>
           )}
         </div>
       </div>
 
-      {/* Status Pipeline Stepper */}
+      {/* ── Status Stepper ─────────────────────────────────────────── */}
       <StatusStepper currentStatus={delivery.status} />
 
-      {/* Warehouse Outgoing Process Guide Banner */}
+      {/* ── Workflow Guide ─────────────────────────────────────────── */}
       <div style={{
-        padding: '16px 20px',
-        backgroundColor: '#ffffff',
-        borderRadius: '10px',
-        border: '1px solid #e2e8f0',
-        marginBottom: '20px',
-        boxShadow: 'var(--shadow-xs)'
+        display: 'flex', gap: '10px', flexWrap: 'wrap',
+        marginBottom: '22px', padding: '16px',
+        backgroundColor: 'rgba(15,23,42,0.45)', border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '12px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={18} color="#3b82f6" />
-            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-              Standard Outgoing Shipment Process
-            </h4>
-          </div>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Warehouse SOP</span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-          {/* Step 1: Pick */}
-          <div style={{
-            padding: '12px',
-            borderRadius: '8px',
-            backgroundColor: allPicked ? '#f0fdf4' : '#f8fafc',
-            border: `1px solid ${allPicked ? '#86efac' : '#e2e8f0'}`,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px'
-          }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: allPicked ? '#22c55e' : '#3b82f6',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              flexShrink: 0
-            }}>
-              1
-            </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>
-                Pick Items
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                Collect items from shelves in {delivery.from_location_name || 'Stock Room'}.
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Pack */}
-          <div style={{
-            padding: '12px',
-            borderRadius: '8px',
-            backgroundColor: allPacked ? '#f0fdf4' : '#f8fafc',
-            border: `1px solid ${allPacked ? '#86efac' : '#e2e8f0'}`,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px'
-          }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: allPacked ? '#22c55e' : '#3b82f6',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              flexShrink: 0
-            }}>
-              2
-            </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>
-                Pack Items
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                Box, label, and seal packages for dispatch.
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Validate */}
-          <div style={{
-            padding: '12px',
-            borderRadius: '8px',
-            backgroundColor: isDone ? '#f0fdf4' : '#f8fafc',
-            border: `1px solid ${isDone ? '#86efac' : '#e2e8f0'}`,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px'
-          }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: isDone ? '#22c55e' : '#3b82f6',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              flexShrink: 0
-            }}>
-              3
-            </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>
-                Validate → Stock Decreases
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                Stock reduces automatically & Move History is logged.
-              </div>
-            </div>
-          </div>
-        </div>
+        <WorkflowStep step="1" label="Pick Items" desc={`Collect from ${delivery.from_location_name || 'Stock Room'}`} done={allPicked} active={!isDone && !allPicked} />
+        <WorkflowStep step="2" label="Pack Items" desc="Box, label & seal for dispatch" done={allPacked} active={allPicked && !allPacked} />
+        <WorkflowStep step="3" label="Validate → Dispatch" desc="Stock decreases automatically" done={isDone} active={allPacked && !isDone} />
       </div>
 
-      {/* Order Meta Header Card */}
-      <div className="card" style={{ marginBottom: '24px' }}>
-        <div className="card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <Warehouse size={14} /> Source Location (From)
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>
-              {delivery.from_location_name || 'Stock Room'}
-              <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: '6px' }}>
-                ({delivery.from_location_code || 'WH/STOCK1'})
-              </span>
-            </div>
+      {/* ── Meta Info Card ─────────────────────────────────────────── */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0',
+        backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '14px', overflow: 'hidden', marginBottom: '22px',
+      }}>
+        {[
+          { icon: Warehouse, label: 'Source Location', value: delivery.from_location_name || 'Stock Room', sub: delivery.from_location_code ? `Code: ${delivery.from_location_code}` : null },
+          { icon: User, label: 'Customer / Contact', value: delivery.to_contact },
+          { icon: MapPin, label: 'Delivery Address', value: delivery.delivery_address },
+          { icon: Calendar, label: 'Scheduled Date', value: delivery.schedule_date ? delivery.schedule_date.split('T')[0] : null },
+          { icon: User, label: 'Responsible', value: delivery.responsible_name || 'System', sub: 'Logged-in operator' },
+          { icon: Layers, label: 'Operation Type', value: delivery.operation_type || 'Delivery Orders' },
+        ].map((field, i) => (
+          <div key={i} style={{
+            padding: '16px 20px',
+            borderRight: i % 3 !== 2 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <MetaField {...field} />
           </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <User size={14} /> Customer / To Contact
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>
-              {delivery.to_contact || '—'}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <MapPin size={14} /> Delivery Address
-            </div>
-            <div style={{ fontSize: '0.95rem', color: '#334155' }}>
-              {delivery.delivery_address || '—'}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <Calendar size={14} /> Schedule Date
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>
-              {delivery.schedule_date ? delivery.schedule_date.split('T')[0] : '—'}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <User size={14} /> Responsible (Auto-filled)
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>
-              {delivery.responsible_name || 'admin1'}
-              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '6px' }}>(Logged-in User)</span>
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
-              <Layers size={14} /> Operation Type
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a' }}>
-              {delivery.operation_type || 'Delivery Orders'}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Product Lines Section */}
-      <div className="card" style={{ marginBottom: '24px' }}>
-        <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* ── Product Lines Table ────────────────────────────────────── */}
+      <div style={{
+        backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '14px', overflow: 'hidden', marginBottom: '22px',
+      }}>
+        {/* Table Header Bar */}
+        <div style={{
+          padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          backgroundColor: 'rgba(15,23,42,0.3)',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Package size={18} color="#3b82f6" />
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-              Product Operations & Stock Allocation
-            </h3>
+            <Package size={17} color="#818cf8" />
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#f1f5f9' }}>Product Lines & Stock Allocation</span>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', backgroundColor: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '99px', padding: '2px 8px', fontWeight: 600 }}>
+              {lines.length} item{lines.length !== 1 ? 's' : ''}
+            </span>
           </div>
-
           {isEditable && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={openAddLineModal}
-            >
-              <Plus size={14} /> Add Product Line
+            <button type="button" onClick={openAddLineModal} style={btnSecStyle}>
+              <Plus size={13} /> Add Line
             </button>
           )}
         </div>
 
-        <div className="card-body" style={{ padding: 0 }}>
-          {lines.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b' }}>
-              <p>No products added to this delivery order yet.</p>
-              {isEditable && (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ marginTop: '12px' }}
-                  onClick={openAddLineModal}
-                >
-                  <Plus size={14} /> Add First Product
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="data-table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>SKU</th>
-                    <th>Demand Quantity</th>
-                    <th>Current On-Hand</th>
-                    <th>Availability Status</th>
-                    <th style={{ textAlign: 'center' }}>Step 1: Picked</th>
-                    <th style={{ textAlign: 'center' }}>Step 2: Packed</th>
-                    <th>Stock Impact Preview</th>
-                    {isEditable && <th style={{ textAlign: 'right' }}>Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((line) => {
-                    const isOut = line.out_of_stock || (line.stock_on_hand < line.quantity);
-                    const isPicked = !!pickedLines[line.id];
-                    const isPacked = !!packedLines[line.id];
-                    const remainingStock = Math.max(0, (line.stock_on_hand || 0) - line.quantity);
+        {lines.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: '#64748b' }}>
+            <Package size={32} style={{ opacity: 0.3, marginBottom: '12px' }} />
+            <p style={{ margin: '0 0 16px', fontSize: '0.875rem' }}>No products added to this delivery order yet.</p>
+            {isEditable && (
+              <button type="button" onClick={openAddLineModal} style={btnPrimaryStyle}>
+                <Plus size={14} /> Add First Product
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  {['Product', 'SKU', 'Demand Qty', 'On Hand', 'Availability', 'Step 1: Pick', 'Step 2: Pack', 'Stock After', ...(isEditable ? [''] : [])].map((h, i) => (
+                    <th key={i} style={{
+                      padding: '11px 16px', textAlign: ['Step 1: Pick', 'Step 2: Pack'].includes(h) ? 'center' : 'left',
+                      color: '#64748b', fontSize: '0.71rem', fontWeight: 700,
+                      textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, idx) => {
+                  const isOut = line.out_of_stock || (line.stock_on_hand < line.quantity);
+                  const isPicked = !!pickedLines[line.id];
+                  const isPacked = !!packedLines[line.id];
+                  const remainingStock = Math.max(0, (line.stock_on_hand || 0) - line.quantity);
+                  const isEven = idx % 2 === 0;
 
-                    return (
-                      <tr
-                        key={line.id}
-                        className={isOut ? 'row-out-of-stock' : ''}
-                        style={{
-                          backgroundColor: isOut ? 'rgba(239, 68, 68, 0.05)' : undefined
-                        }}
-                      >
-                        {/* Product Name */}
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#0f172a' }}>
-                            {line.product_name}
+                  return (
+                    <tr key={line.id} style={{
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      backgroundColor: isOut
+                        ? 'rgba(239,68,68,0.05)'
+                        : isEven ? 'transparent' : 'rgba(255,255,255,0.01)',
+                    }}>
+                      {/* Product */}
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontWeight: 700, color: '#f1f5f9' }}>{line.product_name}</div>
+                        {isOut && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', color: '#f87171', fontSize: '0.72rem', fontWeight: 600 }}>
+                            <AlertTriangle size={11} /> Insufficient stock
                           </div>
-                          {isOut && (
-                            <div style={{
-                              color: 'var(--color-danger)',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              marginTop: '2px'
-                            }}>
-                              <AlertTriangle size={12} />
-                              Out of stock alert: demand exceeds on-hand quantity!
-                            </div>
-                          )}
-                        </td>
-
-                        {/* SKU */}
-                        <td>
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#64748b' }}>
-                            {line.product_sku}
-                          </span>
-                        </td>
-
-                        {/* Demand Quantity */}
-                        <td>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                            {line.quantity} units
-                          </span>
-                        </td>
-
-                        {/* On Hand Stock */}
-                        <td>
-                          <span style={{
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            color: isOut ? 'var(--color-danger)' : '#059669'
-                          }}>
-                            {line.stock_on_hand ?? 0} units
-                          </span>
-                        </td>
-
-                        {/* Stock Availability Badge */}
-                        <td>
-                          {isOut ? (
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              backgroundColor: '#fee2e2',
-                              color: '#dc2626'
-                            }}>
-                              <AlertTriangle size={12} /> Missing Stock
-                            </span>
-                          ) : (
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              backgroundColor: '#dcfce7',
-                              color: '#15803d'
-                            }}>
-                              <CheckCircle2 size={12} /> In Stock
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Step 1: Picked Checkbox / Button */}
-                        <td style={{ textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => togglePick(line.id)}
-                            disabled={isDone || isCanceled}
-                            style={{
-                              border: isPicked ? '1px solid #16a34a' : '1px solid #cbd5e1',
-                              backgroundColor: isPicked ? '#dcfce7' : '#fff',
-                              color: isPicked ? '#15803d' : '#64748b',
-                              borderRadius: '6px',
-                              padding: '4px 10px',
-                              cursor: (isDone || isCanceled) ? 'default' : 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <span style={{
-                              width: '14px',
-                              height: '14px',
-                              borderRadius: '3px',
-                              backgroundColor: isPicked ? '#22c55e' : '#fff',
-                              border: isPicked ? '1px solid #16a34a' : '1px solid #94a3b8',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#fff',
-                              fontSize: '10px'
-                            }}>
-                              {isPicked && '✓'}
-                            </span>
-                            {isPicked ? 'Picked' : 'Mark Pick'}
-                          </button>
-                        </td>
-
-                        {/* Step 2: Packed Checkbox / Button */}
-                        <td style={{ textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => togglePack(line.id)}
-                            disabled={isDone || isCanceled}
-                            style={{
-                              border: isPacked ? '1px solid #16a34a' : '1px solid #cbd5e1',
-                              backgroundColor: isPacked ? '#dcfce7' : '#fff',
-                              color: isPacked ? '#15803d' : '#64748b',
-                              borderRadius: '6px',
-                              padding: '4px 10px',
-                              cursor: (isDone || isCanceled) ? 'default' : 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <span style={{
-                              width: '14px',
-                              height: '14px',
-                              borderRadius: '3px',
-                              backgroundColor: isPacked ? '#22c55e' : '#fff',
-                              border: isPacked ? '1px solid #16a34a' : '1px solid #94a3b8',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#fff',
-                              fontSize: '10px'
-                            }}>
-                              {isPacked && '✓'}
-                            </span>
-                            {isPacked ? 'Packed' : 'Mark Pack'}
-                          </button>
-                        </td>
-
-                        {/* Stock Impact Visualizer */}
-                        <td>
-                          {isDone ? (
-                            <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600 }}>
-                              ✓ Stock decreased by {line.quantity} units
-                            </span>
-                          ) : (
-                            <div style={{ fontSize: '0.8rem', color: '#475569' }}>
-                              <span>{line.stock_on_hand ?? 0}</span>
-                              <span style={{ color: 'var(--color-danger)', fontWeight: 700, margin: '0 4px' }}>
-                                - {line.quantity}
-                              </span>
-                              <span>= <strong>{remainingStock}</strong> units left</span>
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Actions */}
-                        {isEditable && (
-                          <td style={{ textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              className="btn-ghost btn-icon"
-                              onClick={() => handleRemoveLine(line.id)}
-                              style={{ color: '#ef4444', border: 'none', cursor: 'pointer' }}
-                              title="Delete line"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </td>
                         )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                      </td>
+
+                      {/* SKU */}
+                      <td style={{ padding: '14px 16px' }}>
+                        <code style={{ fontSize: '0.78rem', color: '#818cf8', backgroundColor: 'rgba(99,102,241,0.1)', padding: '2px 7px', borderRadius: '5px' }}>
+                          {line.product_sku}
+                        </code>
+                      </td>
+
+                      {/* Demand */}
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem' }}>{line.quantity}</span>
+                        <span style={{ color: '#64748b', fontSize: '0.78rem', marginLeft: '4px' }}>units</span>
+                      </td>
+
+                      {/* On Hand */}
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ fontWeight: 700, color: isOut ? '#f87171' : '#34d399', fontSize: '0.9rem' }}>
+                          {line.stock_on_hand ?? 0}
+                        </span>
+                        <span style={{ color: '#64748b', fontSize: '0.78rem', marginLeft: '4px' }}>units</span>
+                      </td>
+
+                      {/* Availability */}
+                      <td style={{ padding: '14px 16px' }}>
+                        {isOut ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 9px', borderRadius: '99px', fontSize: '0.73rem', fontWeight: 700, backgroundColor: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+                            <AlertTriangle size={11} /> Missing
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 9px', borderRadius: '99px', fontSize: '0.73rem', fontWeight: 700, backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#34d399' }}>
+                            <CheckCircle2 size={11} /> In Stock
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Pick Toggle */}
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => togglePick(line.id)}
+                          disabled={isDone || isCanceled}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '5px',
+                            padding: '5px 12px', borderRadius: '7px', cursor: (isDone || isCanceled) ? 'default' : 'pointer',
+                            border: `1px solid ${isPicked ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.12)'}`,
+                            backgroundColor: isPicked ? 'rgba(16,185,129,0.12)' : 'rgba(30,41,59,0.6)',
+                            color: isPicked ? '#34d399' : '#64748b',
+                            fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.15s',
+                          }}
+                        >
+                          <span style={{
+                            width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0,
+                            backgroundColor: isPicked ? '#10b981' : 'transparent',
+                            border: `2px solid ${isPicked ? '#10b981' : '#475569'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontSize: '9px',
+                          }}>{isPicked && '✓'}</span>
+                          {isPicked ? 'Picked' : 'Mark Pick'}
+                        </button>
+                      </td>
+
+                      {/* Pack Toggle */}
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => togglePack(line.id)}
+                          disabled={isDone || isCanceled}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '5px',
+                            padding: '5px 12px', borderRadius: '7px', cursor: (isDone || isCanceled) ? 'default' : 'pointer',
+                            border: `1px solid ${isPacked ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.12)'}`,
+                            backgroundColor: isPacked ? 'rgba(16,185,129,0.12)' : 'rgba(30,41,59,0.6)',
+                            color: isPacked ? '#34d399' : '#64748b',
+                            fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.15s',
+                          }}
+                        >
+                          <span style={{
+                            width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0,
+                            backgroundColor: isPacked ? '#10b981' : 'transparent',
+                            border: `2px solid ${isPacked ? '#10b981' : '#475569'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontSize: '9px',
+                          }}>{isPacked && '✓'}</span>
+                          {isPacked ? 'Packed' : 'Mark Pack'}
+                        </button>
+                      </td>
+
+                      {/* Stock After */}
+                      <td style={{ padding: '14px 16px' }}>
+                        {isDone ? (
+                          <span style={{ color: '#34d399', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={13} /> −{line.quantity} dispatched
+                          </span>
+                        ) : (
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'monospace' }}>
+                            <span>{line.stock_on_hand ?? 0}</span>
+                            <span style={{ color: '#f87171', fontWeight: 700 }}>−{line.quantity}</span>
+                            <span>=</span>
+                            <span style={{ color: '#f1f5f9', fontWeight: 700 }}>{remainingStock}</span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Delete */}
+                      {isEditable && (
+                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLine(line.id)}
+                            title="Remove line"
+                            style={{ background: 'none', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '6px', padding: '5px 7px', color: '#f87171', cursor: 'pointer', transition: 'all 0.15s', display: 'inline-flex', alignItems: 'center' }}
+                            onMouseOver={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)'; }}
+                            onMouseOut={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Done State: Ledger Confirmation & Next Steps */}
+      {/* ── Done Confirmation Banner ───────────────────────────────── */}
       {isDone && (
-        <div className="card" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', marginBottom: '24px' }}>
-          <div className="card-body">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <CheckCircle2 size={20} color="#16a34a" />
-              <h4 style={{ margin: 0, color: '#15803d', fontWeight: 700 }}>
-                Stock Successfully Decreased & Recorded in Move History
-              </h4>
-            </div>
-            <p style={{ color: '#166534', fontSize: '0.875rem' }}>
-              Stock for all line items was automatically subtracted from the source warehouse location. An append-only Move History ledger record with direction <strong>OUT</strong> has been permanently posted.
-            </p>
-            <div style={{ marginTop: '12px' }}>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => setIsPrintModalOpen(true)}
-              >
-                <Printer size={14} /> Print Packing Slip
-              </button>
-            </div>
+        <div style={{
+          padding: '20px 24px', borderRadius: '12px', marginBottom: '22px',
+          backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <CheckCircle2 size={22} color="#34d399" />
+            <h3 style={{ margin: 0, color: '#34d399', fontSize: '1rem', fontWeight: 700 }}>
+              Shipment Dispatched — Stock Updated & Move History Recorded
+            </h3>
           </div>
+          <p style={{ margin: '0 0 14px', color: '#64748b', fontSize: '0.85rem' }}>
+            All product quantities have been automatically deducted from the source location.
+            An immutable <strong style={{ color: '#94a3b8' }}>OUT</strong> record has been posted to the Move History ledger.
+          </p>
+          <button type="button" onClick={() => setIsPrintModalOpen(true)} style={btnPrimaryStyle}>
+            <Printer size={14} /> Print Packing Slip
+          </button>
         </div>
       )}
 
-      {/* Add Line Modal */}
-      <Modal
-        isOpen={isAddLineOpen}
-        onClose={() => setIsAddLineOpen(false)}
-        title="Add Product to Delivery Order"
-      >
-        <form onSubmit={handleAddLine} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* ── Add Product Line Modal ─────────────────────────────────── */}
+      <Modal isOpen={isAddLineOpen} onClose={() => setIsAddLineOpen(false)} title="Add Product to Delivery">
+        <form onSubmit={handleAddLine} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
               Select Product *
             </label>
             <select
               value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
+              onChange={e => setSelectedProductId(e.target.value)}
               required
               style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.875rem'
+                width: '100%', padding: '10px 14px', borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.12)', fontSize: '0.875rem',
+                backgroundColor: 'rgba(15,23,42,0.8)', color: '#f1f5f9',
               }}
             >
-              {availableProducts.map((p) => (
+              {availableProducts.map(p => (
                 <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku}) — Available On Hand: {p.total_on_hand ?? p.stock_on_hand ?? 0}
+                  {p.name} ({p.sku}) · On Hand: {p.total_on_hand ?? p.stock_on_hand ?? 0}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-              Demand Quantity *
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+              Quantity *
             </label>
             <input
               type="number"
               min="1"
               value={lineQuantity}
-              onChange={(e) => setLineQuantity(e.target.value)}
+              onChange={e => setLineQuantity(e.target.value)}
               required
               style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.875rem'
+                width: '100%', padding: '10px 14px', borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.12)', fontSize: '0.875rem',
+                backgroundColor: 'rgba(15,23,42,0.8)', color: '#f1f5f9',
               }}
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setIsAddLineOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={actionLoading}
-            >
-              {actionLoading ? 'Adding...' : 'Add Line'}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button type="button" onClick={() => setIsAddLineOpen(false)} style={btnSecStyle}>Cancel</button>
+            <button type="submit" disabled={actionLoading} style={btnPrimaryStyle}>
+              {actionLoading ? 'Adding…' : <><Plus size={14} /> Add Line</>}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Print Delivery Slip Modal */}
-      <Modal
+      {/* ── Print Slip ────────────────────────────────────────────── */}
+      <PrintSlip
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        title="Delivery Order Slip (Print View)"
-        maxWidth="650px"
-      >
-        <div id="printable-delivery-slip" style={{ padding: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '16px' }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>StockSense Warehouse</h2>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0' }}>Main Warehouse Hub (WH) — Hyderabad</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#3b82f6' }}>DELIVERY SLIP</h3>
-              <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: '2px 0 0' }}>{delivery.reference}</p>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '0.85rem' }}>
-            <div>
-              <strong>Ship To:</strong>
-              <div>{delivery.to_contact || 'Customer'}</div>
-              <div>{delivery.delivery_address || 'No street address provided'}</div>
-            </div>
-            <div>
-              <div><strong>Dispatch Date:</strong> {delivery.schedule_date ? delivery.schedule_date.split('T')[0] : 'N/A'}</div>
-              <div><strong>From Location:</strong> {delivery.from_location_name} ({delivery.from_location_code})</div>
-              <div><strong>Responsible:</strong> {delivery.responsible_name}</div>
-            </div>
-          </div>
-
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', marginBottom: '24px' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                <th style={{ padding: '8px', textAlign: 'left' }}>SKU</th>
-                <th style={{ padding: '8px', textAlign: 'left' }}>Product Description</th>
-                <th style={{ padding: '8px', textAlign: 'right' }}>Shipped Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((l) => (
-                <tr key={l.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '8px', fontFamily: 'monospace' }}>{l.product_sku}</td>
-                  <td style={{ padding: '8px' }}>{l.product_name}</td>
-                  <td style={{ padding: '8px', textAlign: 'right', fontWeight: 700 }}>{l.quantity} units</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '16px', fontSize: '0.8rem', color: '#64748b' }}>
-            <div>Picked & Packed by Warehouse Staff</div>
-            <div>Authorized Signature: _______________________</div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setIsPrintModalOpen(false)}
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => window.print()}
-            >
-              <Printer size={16} /> Print Document
-            </button>
-          </div>
-        </div>
-      </Modal>
+        data={delivery}
+        type="delivery"
+      />
     </div>
   );
 }
+
+/* ── Button style constants ─────────────────────────────────────────── */
+const btnSecStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: '6px',
+  padding: '8px 14px', borderRadius: '8px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  backgroundColor: 'rgba(30,41,59,0.7)', color: '#cbd5e1',
+  cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, transition: 'all 0.15s',
+};
+
+const btnPrimaryStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: '6px',
+  padding: '9px 18px', borderRadius: '8px', border: 'none',
+  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+  color: '#fff', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700,
+  transition: 'all 0.15s', boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+};
+
+const btnDangerStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: '6px',
+  padding: '8px 14px', borderRadius: '8px',
+  border: '1px solid rgba(239,68,68,0.3)',
+  backgroundColor: 'rgba(239,68,68,0.1)', color: '#f87171',
+  cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, transition: 'all 0.15s',
+};
