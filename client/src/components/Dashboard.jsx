@@ -25,10 +25,6 @@ import {
   IconHistory,
   IconWarehouse,
 } from './common/Icons';
-import {
-  INITIAL_WAREHOUSES,
-  INITIAL_ACTIVITIES,
-} from '../services/mockData';
 
 export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const navigate = useNavigate();
@@ -50,13 +46,13 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [creatingReceipt, setCreatingReceipt] = useState(false);
 
-  // Live data states
+  // 100% Live database data states
   const [products, setProducts] = useState([]);
   const [receipts, setReceipts] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
-  const [activities] = useState(INITIAL_ACTIVITIES);
-  const [warehouses] = useState(INITIAL_WAREHOUSES);
+  const [activities, setActivities] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
   const [actionNotice, setActionNotice] = useState(null);
 
   const showNotice = (msg) => {
@@ -78,22 +74,56 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
     }
   };
 
-  // Fetch live operational data from backend
+  // Fetch live operational data from backend MySQL database
   const loadDashboardData = useCallback(async () => {
     try {
-      const [prodRes, recRes, delRes, statsRes] = await Promise.all([
+      const [prodRes, recRes, delRes, statsRes, whRes, movesRes] = await Promise.all([
         get('/products').catch(() => ({ data: [] })),
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
+        get('/ref/warehouses').catch(() => ({ data: [] })),
+        get('/ref/moves').catch(() => ({ data: [] })),
       ]);
 
       if (prodRes?.data) setProducts(prodRes.data);
       if (recRes?.data) setReceipts(recRes.data);
       if (delRes?.data) setDeliveries(delRes.data);
       if (statsRes?.data) setDeliveryStats(statsRes.data);
+
+      if (whRes?.data && whRes.data.length > 0) {
+        setWarehouses(whRes.data.map(w => ({
+          id: w.id,
+          code: w.short_code || w.code || `WH${w.id}`,
+          name: w.name,
+          location: w.address || 'Main Storage Facility',
+        })));
+      }
+
+      if (movesRes?.data && movesRes.data.length > 0) {
+        const mapped = movesRes.data.map((m) => {
+          const isIncoming = m.direction === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock';
+          const isAdjustment = m.reference?.startsWith('ADJ') || m.contact === 'Stock Adjustment';
+          const actType = isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
+
+          return {
+            id: m.id,
+            type: actType,
+            reference: m.reference || `MOV/${m.id}`,
+            product: m.product_name || `Product #${m.product_id}`,
+            qty: `${actType === 'IN' ? '+' : '-'}${m.quantity} ${m.uom || 'units'}`,
+            location: m.to_location || m.from_location || 'Stock Room',
+            contact: m.contact || (isIncoming ? 'Supplier' : 'Customer'),
+            status: m.status || 'done',
+            time: m.move_date
+              ? new Date(m.move_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'Recent',
+          };
+        });
+        setActivities(mapped);
+      }
     } catch (err) {
-      console.warn('Dashboard data fetch error:', err);
+      console.warn('Dashboard live data fetch error:', err);
     }
   }, []);
 
@@ -124,7 +154,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Calculations & KPI Stats based on real database records
+  // Calculations & KPI Stats based strictly on real database records
   const lowStockItems = useMemo(() => {
     return products.filter((p) => {
       const onHand = Number(p.on_hand_qty ?? p.onHand ?? 0);
@@ -147,7 +177,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
     });
   }, [deliveries]);
 
-  // Filtered Activities
+  // Filtered Activities from live Move History
   const filteredActivities = useMemo(() => {
     return activities.filter((act) => {
       if (typeFilter !== 'ALL' && act.type !== typeFilter) return false;
@@ -526,7 +556,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="activity-list">
                     {filteredActivities.length === 0 ? (
                       <div className="empty-state-card">
-                        <p>No stock movements match current filters.</p>
+                        <p>No stock movements recorded in database yet.</p>
                       </div>
                     ) : (
                       filteredActivities.map((act) => (
@@ -617,19 +647,27 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {activities.map((a) => (
-                      <tr key={a.id} className={a.type === 'IN' ? 'row-in' : a.type === 'OUT' ? 'row-out' : ''}>
-                        <td>
-                          <span className={`type-tag ${a.type.toLowerCase()}`}>{a.type}</span>
+                    {activities.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                          No movements found in ledger history.
                         </td>
-                        <td><span className="code-pill">{a.reference}</span></td>
-                        <td className="font-semibold">{a.product}</td>
-                        <td className={a.type === 'IN' ? 'text-green' : 'text-red'}>{a.qty}</td>
-                        <td>{a.location}</td>
-                        <td>{a.contact}</td>
-                        <td><StatusBadge status={a.status} /></td>
                       </tr>
-                    ))}
+                    ) : (
+                      activities.map((a) => (
+                        <tr key={a.id} className={a.type === 'IN' ? 'row-in' : a.type === 'OUT' ? 'row-out' : ''}>
+                          <td>
+                            <span className={`type-tag ${a.type.toLowerCase()}`}>{a.type}</span>
+                          </td>
+                          <td><span className="code-pill">{a.reference}</span></td>
+                          <td className="font-semibold">{a.product}</td>
+                          <td className={a.type === 'IN' ? 'text-green' : 'text-red'}>{a.qty}</td>
+                          <td>{a.location}</td>
+                          <td>{a.contact}</td>
+                          <td><StatusBadge status={a.status} /></td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -646,20 +684,26 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
               </div>
 
               <div className="warehouse-grid">
-                {warehouses.map((wh) => (
-                  <div key={wh.id} className="warehouse-card">
-                    <div className="wh-header">
-                      <IconWarehouse size={22} className="text-purple" />
-                      <span className="wh-code">{wh.code}</span>
-                    </div>
-                    <h3>{wh.name}</h3>
-                    <p className="wh-location">{wh.location}</p>
-                    <div className="wh-stats">
-                      <span>Status: <strong className="text-green">Active</strong></span>
-                      <span>Bins: <strong>24</strong></span>
-                    </div>
+                {warehouses.length === 0 ? (
+                  <div className="empty-state-card" style={{ gridColumn: '1 / -1' }}>
+                    <p>No warehouses registered yet.</p>
                   </div>
-                ))}
+                ) : (
+                  warehouses.map((wh) => (
+                    <div key={wh.id} className="warehouse-card">
+                      <div className="wh-header">
+                        <IconWarehouse size={22} className="text-purple" />
+                        <span className="wh-code">{wh.code}</span>
+                      </div>
+                      <h3>{wh.name}</h3>
+                      <p className="wh-location">{wh.location}</p>
+                      <div className="wh-stats">
+                        <span>Status: <strong className="text-green">Active</strong></span>
+                        <span>Facility ID: <strong>#{wh.id}</strong></span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

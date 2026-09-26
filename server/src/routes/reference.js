@@ -115,4 +115,28 @@ router.get('/categories', auth, async (req, res) => {
   }
 });
 
+// GET /api/ref/moves — live stock ledger / move history joined with product
+router.get('/moves', auth, async (req, res) => {
+  try {
+    const { limit = 50, direction } = req.query;
+    let sql = `
+      SELECT m.*, p.name as product_name, p.sku as product_sku, p.unit_of_measure as uom
+      FROM move_history m
+      LEFT JOIN products p ON m.product_id = p.id
+    `;
+    const params = [];
+    if (direction) {
+      sql += ' WHERE m.direction = ?';
+      params.push(direction);
+    }
+    sql += ' ORDER BY m.move_date DESC, m.id DESC LIMIT ?';
+    params.push(parseInt(limit, 10));
+
+    const [rows] = await pool.query(sql, params);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 module.exports = router;
