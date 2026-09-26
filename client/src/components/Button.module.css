@@ -1,0 +1,28 @@
+/* client/src/components/Button.module.css */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.primary   { background: var(--color-primary);   color: #fff; }
+.primary:hover:not(:disabled)   { background: var(--color-primary-hover); }
+
+.secondary { background: var(--color-border); color: var(--color-text); }
+.secondary:hover:not(:disabled) { background: #d1d5db; }
+
+.danger    { background: var(--color-danger);    color: #fff; }
+.danger:hover:not(:disabled)    { background: var(--color-danger-hover); }
+
+.ghost     { background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); }
+.ghost:hover:not(:disabled)     { background: #ede9fe; }
+
+.sm { padding: 4px 10px; font-size: 12px; }
+.lg { padding: 10px 22px; font-size: 15px; }

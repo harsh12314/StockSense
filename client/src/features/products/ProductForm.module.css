@@ -1,0 +1,21 @@
+/* client/src/features/products/ProductForm.module.css */
+.apiError {
+  background: #fee2e2;
+  color: var(--color-danger);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  border: 1px solid #fecaca;
+}
+.categoryRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.categoryRow select { flex: 1; }
+.newCatRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.newCatRow input { flex: 1; }
