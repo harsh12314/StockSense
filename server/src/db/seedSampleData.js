@@ -1,13 +1,15 @@
 // server/src/db/seedSampleData.js
+// Seeds the database with rich, professional demo data for demo/presentation.
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const pool = require('./connection');
 
 async function seed() {
   const conn = await pool.getConnection();
   try {
-    console.log('--- Initializing StockSense Database Tables & Sample Data ---');
+    console.log('--- Initializing StockSense Database Tables & Demo Data ---');
 
-    // 1. Ensure all tables exist
+    // 1. Ensure all tables exist with full constraints
     await conn.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -50,9 +52,12 @@ async function seed() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         sku VARCHAR(100) UNIQUE NOT NULL,
-        category VARCHAR(100),
+        category_id INT,
         unit_of_measure VARCHAR(50) DEFAULT 'Units',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        per_unit_cost DECIMAL(10,2) DEFAULT 0,
+        reordering_rule VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
       )
     `);
 
@@ -120,6 +125,7 @@ async function seed() {
         delivery_id INT NOT NULL,
         product_id INT NOT NULL,
         quantity INT NOT NULL CHECK (quantity > 0),
+        out_of_stock BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (delivery_id) REFERENCES deliveries(id) ON DELETE CASCADE,
         FOREIGN KEY (product_id) REFERENCES products(id)
       )
@@ -189,57 +195,81 @@ async function seed() {
       )
     `);
 
-    console.log('✓ All 11 tables verified.');
+    console.log('✓ All database schemas verified.');
 
-    // 2. Seed Users if not present
-    const [[adminUser]] = await conn.query("SELECT id FROM users WHERE login_id = 'admin1'");
-    let adminId = adminUser?.id;
-    if (!adminId) {
-      const [res] = await conn.query(
-        "INSERT INTO users (login_id, email, password_hash, role) VALUES ('admin1', 'admin@stocksense.com', '$2a$10$w8T0M4G4dE0P4eS/8w4PbuN9h/YwL5.k9bA5B.eLzY7v9B7YwXk3G', 'inventory_manager')"
+    // 2. Seed Users
+    const defaultPasswordHash = await bcrypt.hash('Password1!', 10);
+    const demoUsers = [
+      { loginId: 'admin1', email: 'admin@stocksense.io', role: 'inventory_manager' },
+      { loginId: 'operator1', email: 'operator@stocksense.io', role: 'warehouse_staff' },
+      { loginId: 'staff1', email: 'staff@stocksense.io', role: 'warehouse_staff' },
+      { loginId: 'sarah_ops', email: 'sarah.ops@stocksense.io', role: 'inventory_manager' },
+    ];
+
+    let adminId = null;
+    for (const u of demoUsers) {
+      await conn.query(
+        `INSERT INTO users (login_id, email, password_hash, role)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE email = VALUES(email), role = VALUES(role)`,
+        [u.loginId, u.email, defaultPasswordHash, u.role]
       );
-      adminId = res.insertId;
+      const [[userRow]] = await conn.query('SELECT id FROM users WHERE login_id = ?', [u.loginId]);
+      if (u.loginId === 'admin1') adminId = userRow.id;
     }
+    console.log('✓ Demo users seeded (admin1 / Password1!, operator1 / Password1!)');
 
     // 3. Seed Categories
-    const categories = ['Electronics', 'Warehouse Supplies', 'Industrial Hardware', 'Packaging Materials', 'Office Equipment'];
+    const categories = [
+      'Industrial Hardware',
+      'Electronics & Sensors',
+      'Packaging Materials',
+      'Robotics & Automation',
+      'Safety & Protective Equipment',
+      'Material Handling Gear',
+    ];
     const catMap = {};
     for (const cat of categories) {
       await conn.query('INSERT IGNORE INTO categories (name) VALUES (?)', [cat]);
       const [[cRow]] = await conn.query('SELECT id FROM categories WHERE name = ?', [cat]);
       if (cRow) catMap[cat] = cRow.id;
     }
+    console.log('✓ Product categories seeded.');
 
-    // 4. Seed Warehouses & Locations
+    // 4. Seed Warehouses & Multi-zone Locations
     const warehousesData = [
       {
-        name: 'Main Distribution Hub',
+        name: 'Central Logistics Hub',
         short_code: 'WH',
-        address: '100 Logistics Blvd, Hyderabad, Telangana',
+        address: 'Plot 42, Gachibowli Logistics Park, Hyderabad',
         locations: [
           { name: 'Stock Room', short_code: 'WH/STOCK' },
-          { name: 'Shipping Bay 1', short_code: 'WH/SHIP-01' },
-          { name: 'Production Staging', short_code: 'WH/PROD-STAGE' },
-          { name: 'Cold Storage Room A', short_code: 'WH/COLD-A' },
+          { name: 'Receiving Dock A', short_code: 'WH/IN-A' },
+          { name: 'Bulk Storage Aisle 01', short_code: 'WH/STOCK-A1' },
+          { name: 'High-Rack Storage 02', short_code: 'WH/STOCK-A2' },
+          { name: 'Cold Storage Vault', short_code: 'WH/COLD-01' },
+          { name: 'Staging & Packing Area', short_code: 'WH/PACK-01' },
+          { name: 'Dispatch Bay 1', short_code: 'WH/OUT-01' },
         ],
       },
       {
-        name: 'South Region Facility',
-        short_code: 'SRF',
-        address: '45 Industrial Corridor, Bangalore, Karnataka',
+        name: 'Coastal Gateway Facility',
+        short_code: 'CGF',
+        address: 'Terminal 4, JNPT Port Logistics Zone, Navi Mumbai',
         locations: [
-          { name: 'General Inbound Stock', short_code: 'SRF/STOCK' },
-          { name: 'High-Density Rack B1', short_code: 'SRF/RACK-B1' },
-          { name: 'Dispatch Bay 2', short_code: 'SRF/DISPATCH-02' },
+          { name: 'Inbound Container Yard', short_code: 'CGF/YARD-IN' },
+          { name: 'Main Warehouse Floor', short_code: 'CGF/STOCK' },
+          { name: 'Export Dispatch Dock', short_code: 'CGF/OUT-EXP' },
         ],
       },
       {
-        name: 'North Logistics Depot',
-        short_code: 'NLD',
-        address: '88 Express Highway, Delhi NCR',
+        name: 'North Distribution Depot',
+        short_code: 'NDD',
+        address: 'Sector 18, IMT Manesar, Gurugram, Haryana',
         locations: [
-          { name: 'Central Pallet Storage', short_code: 'NLD/STOCK' },
-          { name: 'Express Sort Line', short_code: 'NLD/SORT-01' },
+          { name: 'North Central Storage', short_code: 'NDD/STOCK' },
+          { name: 'Rapid Fulfillment Line', short_code: 'NDD/PICK-01' },
+          { name: 'Cross-Dock Shipping Area', short_code: 'NDD/SHIP-01' },
         ],
       },
     ];
@@ -272,132 +302,172 @@ async function seed() {
         locMap[loc.short_code] = locId;
       }
     }
+    console.log('✓ 3 Warehouses & 13 Locations verified.');
 
-    console.log('✓ Warehouses & Locations verified.');
-
-    // 5. Seed Products
+    // 5. Seed Comprehensive Catalog of Products (healthy, low-stock alerts, out-of-stock)
     const productsData = [
-      { name: 'Rugged Handheld Barcode Scanner 2D', sku: 'ELEC-SCN-200', category: 'Electronics', unit_of_measure: 'Units', defaultQty: 180 },
-      { name: 'Industrial Thermal Label Printer 300DPI', sku: 'ELEC-PRN-300', category: 'Electronics', unit_of_measure: 'Units', defaultQty: 45 },
-      { name: 'Corrugated Shipping Box (Large 24x18x18)', sku: 'PKG-BOX-LRG', category: 'Packaging Materials', unit_of_measure: 'Pcs', defaultQty: 1200 },
-      { name: 'Heavy-Duty Industrial Stretch Wrap 500m', sku: 'PKG-WRP-500', category: 'Packaging Materials', unit_of_measure: 'Rolls', defaultQty: 340 },
-      { name: 'Steel Pallet Jack 2500kg Capacity', sku: 'HDW-PLT-250', category: 'Industrial Hardware', unit_of_measure: 'Units', defaultQty: 18 },
-      { name: 'Heavy Duty Steel Bolt & Nut Assortment M8', sku: 'HDW-BLT-M08', category: 'Industrial Hardware', unit_of_measure: 'Boxes', defaultQty: 450 },
-      { name: 'Wireless Ergonomic Logistics Keyboard', sku: 'OFF-KBD-WLS', category: 'Office Equipment', unit_of_measure: 'Units', defaultQty: 95 },
-      { name: 'High-Speed Wi-Fi 6 Industrial Access Point', sku: 'ELEC-WIFI-AX', category: 'Electronics', unit_of_measure: 'Units', defaultQty: 60 },
-      { name: 'Anti-Static ESD Protective Bubble Pouch', sku: 'PKG-ESD-100', category: 'Packaging Materials', unit_of_measure: 'Packs', defaultQty: 850 },
-      { name: 'Digital Precision Crane Hanging Scale 500kg', sku: 'HDW-SCL-500', category: 'Industrial Hardware', unit_of_measure: 'Units', defaultQty: 25 },
+      // 1. Healthy stock items
+      { name: 'Industrial Corrugated Box (Pack of 50)', sku: 'PKG-BOX-50', category: 'Packaging Materials', unit_of_measure: 'packs', cost: 1250.00, reorder: '50', qty: 350 },
+      { name: 'High-Tensile Stretch Wrap Roll 500m', sku: 'PKG-WRP-500', category: 'Packaging Materials', unit_of_measure: 'rolls', cost: 850.00, reorder: '30', qty: 180 },
+      { name: 'Thermal Shipping Label Rolls (4x6")', sku: 'PKG-LBL-4X6', category: 'Packaging Materials', unit_of_measure: 'rolls', cost: 480.00, reorder: '40', qty: 240 },
+      { name: 'Anti-Static ESD Protective Bubble Pouch', sku: 'PKG-ESD-100', category: 'Packaging Materials', unit_of_measure: 'packs', cost: 650.00, reorder: '25', qty: 310 },
+      { name: 'IoT Environmental Gateway Sensor Node', sku: 'ELEC-IOT-GW', category: 'Electronics & Sensors', unit_of_measure: 'units', cost: 6800.00, reorder: '15', qty: 64 },
+      { name: 'Heavy Duty Steel Pallet Jack (2.5T)', sku: 'MAT-PLT-25T', category: 'Material Handling Gear', unit_of_measure: 'units', cost: 18500.00, reorder: '5', qty: 14 },
+      { name: 'Reinforced Steel Toe Safety Boots', sku: 'SFT-BOT-42', category: 'Safety & Protective Equipment', unit_of_measure: 'pairs', cost: 3200.00, reorder: '15', qty: 48 },
+      { name: 'Class 2 Hi-Vis Reflective Safety Vest', sku: 'SFT-VST-01', category: 'Safety & Protective Equipment', unit_of_measure: 'units', cost: 420.00, reorder: '20', qty: 95 },
+      { name: 'Industrial Grade M8 Fastener & Bolt Assortment', sku: 'HDW-BLT-M8', category: 'Industrial Hardware', unit_of_measure: 'boxes', cost: 1800.00, reorder: '30', qty: 140 },
+
+      // 2. Critical Low-Stock items (Trigger Low Stock Warning in dashboard)
+      { name: 'Precision Wireless Barcode Ring Scanner', sku: 'ELEC-SCN-2D', category: 'Electronics & Sensors', unit_of_measure: 'units', cost: 9500.00, reorder: '10', qty: 3 },
+      { name: 'Lithium-Ion Forklift Battery Module 48V', sku: 'ELEC-BAT-48V', category: 'Electronics & Sensors', unit_of_measure: 'units', cost: 85000.00, reorder: '4', qty: 2 },
+      { name: 'Heavy Duty Modular Steel Shelving 4-Tier', sku: 'HDW-SHL-4T', category: 'Industrial Hardware', unit_of_measure: 'units', cost: 14500.00, reorder: '8', qty: 4 },
+      { name: 'Hydraulic Scissor Lift Work Table (500kg)', sku: 'MAT-LFT-500', category: 'Material Handling Gear', unit_of_measure: 'units', cost: 42000.00, reorder: '3', qty: 1 },
+
+      // 3. Out of stock item (Triggers Out of Stock stat)
+      { name: 'Autonomous Mobile Warehouse Robot (AMR-500)', sku: 'ROB-AMR-500', category: 'Robotics & Automation', unit_of_measure: 'units', cost: 340000.00, reorder: '2', qty: 0 },
     ];
 
     const prodMap = {};
-    const stockLocId = locMap['WH/STOCK'] || 1;
+    const primaryStockLoc = locMap['WH/STOCK'] || 1;
+    const secondaryStockLoc = locMap['CGF/STOCK'] || 2;
 
     for (const p of productsData) {
       let [existingProd] = await conn.query('SELECT id FROM products WHERE sku = ?', [p.sku]);
       let prodId;
       const catId = catMap[p.category] || null;
+
       if (existingProd.length > 0) {
         prodId = existingProd[0].id;
-        await conn.query('UPDATE products SET name = ?, category_id = ?, unit_of_measure = ? WHERE id = ?', [p.name, catId, p.unit_of_measure, prodId]);
+        await conn.query(
+          `UPDATE products
+           SET name = ?, category_id = ?, unit_of_measure = ?, per_unit_cost = ?, reordering_rule = ?
+           WHERE id = ?`,
+          [p.name, catId, p.unit_of_measure, p.cost, p.reorder, prodId]
+        );
       } else {
-        const [res] = await conn.query('INSERT INTO products (name, sku, category_id, unit_of_measure) VALUES (?, ?, ?, ?)', [p.name, p.sku, catId, p.unit_of_measure]);
+        const [res] = await conn.query(
+          `INSERT INTO products (name, sku, category_id, unit_of_measure, per_unit_cost, reordering_rule)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [p.name, p.sku, catId, p.unit_of_measure, p.cost, p.reorder]
+        );
         prodId = res.insertId;
       }
       prodMap[p.sku] = prodId;
 
-      // Seed Initial Stock in WH/STOCK
+      // Seed Stock
+      const freeQty = p.qty > 0 ? Math.max(0, p.qty - 2) : 0;
       await conn.query(
         `INSERT INTO stock (product_id, location_id, on_hand_qty, free_to_use_qty)
          VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE on_hand_qty = GREATEST(on_hand_qty, VALUES(on_hand_qty)), free_to_use_qty = GREATEST(free_to_use_qty, VALUES(free_to_use_qty))`,
-        [prodId, stockLocId, p.defaultQty, Math.floor(p.defaultQty * 0.9)]
+         ON DUPLICATE KEY UPDATE on_hand_qty = VALUES(on_hand_qty), free_to_use_qty = VALUES(free_to_use_qty)`,
+        [prodId, primaryStockLoc, p.qty, freeQty]
       );
+
+      // Distribute a portion to Coastal facility
+      if (p.qty > 20) {
+        const coastalQty = Math.floor(p.qty * 0.25);
+        await conn.query(
+          `INSERT INTO stock (product_id, location_id, on_hand_qty, free_to_use_qty)
+           VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE on_hand_qty = VALUES(on_hand_qty), free_to_use_qty = VALUES(free_to_use_qty)`,
+          [prodId, secondaryStockLoc, coastalQty, coastalQty]
+        );
+      }
     }
+    console.log('✓ 14 Diverse Products & Multi-location Stock seeded.');
 
-    console.log('✓ Products & Stock inventory seeded.');
-
-    // 6. Seed Deliveries (Rich variety: Done, Ready, Waiting, Draft)
+    // 6. Seed Deliveries across all operational stages: Done, Ready, Waiting, Draft
     const deliveriesSeed = [
       {
         reference: 'WH/OUT/00001',
-        from_location_id: stockLocId,
-        to_contact: 'Acme Retail Solutions Ltd',
-        delivery_address: 'Plot 42, Gachibowli Cyber Towers, Hyderabad',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Tesla Gigafactory Energy Systems',
+        delivery_address: 'Gigafactory Phase 2, Industrial Corridor, Pune',
         schedule_date: '2026-09-24',
-        operation_type: 'Delivery Orders',
+        operation_type: 'Express Freight Dispatch',
         status: 'done',
         lines: [
-          { sku: 'ELEC-SCN-200', qty: 15 },
-          { sku: 'ELEC-PRN-300', qty: 4 },
-          { sku: 'PKG-BOX-LRG', qty: 100 },
+          { sku: 'ELEC-BAT-48V', qty: 2 },
+          { sku: 'MAT-PLT-25T', qty: 4 },
         ],
       },
       {
         reference: 'WH/OUT/00002',
-        from_location_id: stockLocId,
-        to_contact: 'Global Tech Distribution Corp',
-        delivery_address: 'Building 7, Electronics City Phase 1, Bangalore',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Amazon Fulfillment Logistics BLR1',
+        delivery_address: 'Building 12, Devanahalli Logistics Park, Bangalore',
         schedule_date: '2026-09-25',
-        operation_type: 'Delivery Orders',
+        operation_type: 'Bulk Fulfillment Order',
         status: 'done',
         lines: [
-          { sku: 'ELEC-WIFI-AX', qty: 10 },
-          { sku: 'OFF-KBD-WLS', qty: 25 },
-          { sku: 'PKG-WRP-500', qty: 20 },
+          { sku: 'PKG-BOX-50', qty: 80 },
+          { sku: 'PKG-WRP-500', qty: 35 },
+          { sku: 'PKG-LBL-4X6', qty: 50 },
         ],
       },
       {
         reference: 'WH/OUT/00003',
-        from_location_id: stockLocId,
-        to_contact: 'Apex Manufacturing & Logistics',
-        delivery_address: 'Sector 18, Industrial Area, Gurgaon, Haryana',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Siemens Smart Infrastructure Ltd',
+        delivery_address: 'Sector 29, Cyber City Technology Hub, Gurugram',
         schedule_date: '2026-09-26',
-        operation_type: 'Delivery Orders',
+        operation_type: 'Direct Customer Delivery',
         status: 'ready',
         lines: [
-          { sku: 'HDW-PLT-250', qty: 2 },
-          { sku: 'HDW-BLT-M08', qty: 40 },
-          { sku: 'PKG-BOX-LRG', qty: 200 },
+          { sku: 'ELEC-IOT-GW', qty: 15 },
+          { sku: 'MAT-PLT-25T', qty: 2 },
         ],
       },
       {
         reference: 'WH/OUT/00004',
-        from_location_id: stockLocId,
-        to_contact: 'Zenith Logistics International',
-        delivery_address: 'Warehouse Complex 12, Whitefield, Bangalore',
-        schedule_date: '2026-09-27',
-        operation_type: 'Delivery Orders',
+        from_location_id: primaryStockLoc,
+        to_contact: 'DHL Express Supply Chain Depot',
+        delivery_address: 'Shamshabad Air Cargo Complex, Gate 5, Hyderabad',
+        schedule_date: '2026-09-26',
+        operation_type: 'Scheduled Air Freight',
         status: 'ready',
         lines: [
-          { sku: 'ELEC-SCN-200', qty: 8 },
-          { sku: 'PKG-ESD-100', qty: 150 },
+          { sku: 'PKG-BOX-50', qty: 100 },
+          { sku: 'PKG-ESD-100', qty: 50 },
         ],
       },
       {
         reference: 'WH/OUT/00005',
-        from_location_id: stockLocId,
-        to_contact: 'Nexus Supply Chain Partners',
-        delivery_address: 'Cargo Bay 4, Shamshabad Airport Cargo Terminal, Hyderabad',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Larsen & Toubro Heavy Engineering',
+        delivery_address: 'EPC Project Site 9B, Hazira Marine Port, Gujarat',
         schedule_date: '2026-09-28',
-        operation_type: 'Delivery Orders',
+        operation_type: 'Site Cargo Delivery',
         status: 'waiting',
         lines: [
-          { sku: 'HDW-SCL-500', qty: 5 },
-          { sku: 'ELEC-PRN-300', qty: 10 },
-          { sku: 'PKG-WRP-500', qty: 50 },
+          { sku: 'HDW-SHL-4T', qty: 6 },
+          { sku: 'MAT-LFT-500', qty: 2 },
         ],
       },
       {
         reference: 'WH/OUT/00006',
-        from_location_id: stockLocId,
-        to_contact: 'Vanguard Industrial Supplies',
-        delivery_address: '77 Industrial Estate, Sanath Nagar, Hyderabad',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Tata Motors Assembly Plant',
+        delivery_address: 'Plot A-1, Sanand Industrial Area, Ahmedabad',
+        schedule_date: '2026-09-29',
+        operation_type: 'OEM Line Delivery',
+        status: 'waiting',
+        lines: [
+          { sku: 'ELEC-BAT-48V', qty: 4 },
+          { sku: 'ELEC-SCN-2D', qty: 6 },
+        ],
+      },
+      {
+        reference: 'WH/OUT/00007',
+        from_location_id: primaryStockLoc,
+        to_contact: 'Reliance Retail Logistics Center',
+        delivery_address: 'State Highway 17, Bhiwandi Logistics Cluster, Maharashtra',
         schedule_date: '2026-09-30',
-        operation_type: 'Delivery Orders',
+        operation_type: 'Standard Road Transport',
         status: 'draft',
         lines: [
-          { sku: 'ELEC-SCN-200', qty: 12 },
-          { sku: 'OFF-KBD-WLS', qty: 30 },
+          { sku: 'SFT-BOT-42', qty: 20 },
+          { sku: 'SFT-VST-01', qty: 30 },
         ],
       },
     ];
@@ -409,9 +479,9 @@ async function seed() {
         delId = existingDel[0].id;
         await conn.query(
           `UPDATE deliveries
-           SET from_location_id = ?, to_contact = ?, delivery_address = ?, schedule_date = ?, status = ?
+           SET from_location_id = ?, to_contact = ?, delivery_address = ?, schedule_date = ?, operation_type = ?, status = ?
            WHERE id = ?`,
-          [del.from_location_id, del.to_contact, del.delivery_address, del.schedule_date, del.status, delId]
+          [del.from_location_id, del.to_contact, del.delivery_address, del.schedule_date, del.operation_type, del.status, delId]
         );
       } else {
         const [res] = await conn.query(
@@ -422,7 +492,6 @@ async function seed() {
         delId = res.insertId;
       }
 
-      // Re-insert lines
       await conn.query('DELETE FROM delivery_lines WHERE delivery_id = ?', [delId]);
       for (const line of del.lines) {
         const pId = prodMap[line.sku];
@@ -431,7 +500,7 @@ async function seed() {
         }
       }
 
-      // If done, add to move_history
+      // Record in move_history if completed
       if (del.status === 'done') {
         for (const line of del.lines) {
           const pId = prodMap[line.sku];
@@ -439,59 +508,80 @@ async function seed() {
             await conn.query(
               `INSERT IGNORE INTO move_history (reference, move_date, contact, from_location, to_location, product_id, quantity, direction, status)
                VALUES (?, ?, ?, 'WH/STOCK', 'Customer Consignee', ?, ?, 'out', 'DONE')`,
-              [del.reference, `${del.schedule_date} 14:30:00`, del.to_contact, pId, line.qty]
+              [del.reference, `${del.schedule_date} 15:45:00`, del.to_contact, pId, line.qty]
             );
           }
         }
       }
     }
+    console.log('✓ 7 Delivery Orders (Done, Ready, Waiting, Draft) seeded.');
 
-    console.log('✓ Deliveries and lines seeded.');
-
-    // 7. Seed Receipts
+    // 7. Seed Receipts across all operational stages: Done, Ready, Draft, Canceled
     const receiptsSeed = [
       {
         reference: 'WH/IN/00001',
-        from_contact: 'Foxconn Industrial Components',
-        to_location_id: stockLocId,
+        from_contact: 'Tata Steel Global Operations',
+        to_location_id: primaryStockLoc,
         schedule_date: '2026-09-22',
         status: 'done',
         lines: [
-          { sku: 'ELEC-SCN-200', qty: 50 },
-          { sku: 'ELEC-PRN-300', qty: 20 },
+          { sku: 'HDW-SHL-4T', qty: 12 },
+          { sku: 'HDW-BLT-M8', qty: 100 },
         ],
       },
       {
         reference: 'WH/IN/00002',
-        from_contact: 'Mondi Packaging Group',
-        to_location_id: stockLocId,
-        schedule_date: '2026-09-24',
+        from_contact: 'Mondi Industrial Packaging Group',
+        to_location_id: primaryStockLoc,
+        schedule_date: '2026-09-23',
         status: 'done',
         lines: [
-          { sku: 'PKG-BOX-LRG', qty: 500 },
-          { sku: 'PKG-WRP-500', qty: 150 },
+          { sku: 'PKG-BOX-50', qty: 250 },
+          { sku: 'PKG-WRP-500', qty: 100 },
         ],
       },
       {
         reference: 'WH/IN/00003',
-        from_contact: 'Tata Steel Hardware Division',
-        to_location_id: stockLocId,
+        from_contact: 'Foxconn Semiconductor Electronics',
+        to_location_id: primaryStockLoc,
         schedule_date: '2026-09-26',
         status: 'ready',
         lines: [
-          { sku: 'HDW-PLT-250', qty: 5 },
-          { sku: 'HDW-BLT-M08', qty: 200 },
+          { sku: 'ELEC-IOT-GW', qty: 35 },
+          { sku: 'ELEC-SCN-2D', qty: 15 },
         ],
       },
       {
         reference: 'WH/IN/00004',
-        from_contact: 'Logitech Enterprise APAC',
-        to_location_id: stockLocId,
-        schedule_date: '2026-09-29',
+        from_location_id: primaryStockLoc,
+        from_contact: 'SafeGuard International Protective Gear',
+        to_location_id: primaryStockLoc,
+        schedule_date: '2026-09-26',
+        status: 'ready',
+        lines: [
+          { sku: 'SFT-BOT-42', qty: 30 },
+          { sku: 'SFT-VST-01', qty: 60 },
+        ],
+      },
+      {
+        reference: 'WH/IN/00005',
+        from_contact: 'Omron Advanced Automation Systems',
+        to_location_id: primaryStockLoc,
+        schedule_date: '2026-09-28',
         status: 'draft',
         lines: [
-          { sku: 'OFF-KBD-WLS', qty: 80 },
-          { sku: 'ELEC-WIFI-AX', qty: 30 },
+          { sku: 'ROB-AMR-500', qty: 2 },
+          { sku: 'ELEC-BAT-48V', qty: 4 },
+        ],
+      },
+      {
+        reference: 'WH/IN/00006',
+        from_contact: 'Apex Heavy Logistics Equipment',
+        to_location_id: primaryStockLoc,
+        schedule_date: '2026-09-20',
+        status: 'canceled',
+        lines: [
+          { sku: 'MAT-LFT-500', qty: 3 },
         ],
       },
     ];
@@ -531,37 +621,58 @@ async function seed() {
             await conn.query(
               `INSERT IGNORE INTO move_history (reference, move_date, contact, from_location, to_location, product_id, quantity, direction, status)
                VALUES (?, ?, ?, 'Vendor Supplier', 'WH/STOCK', ?, ?, 'in', 'DONE')`,
-              [rec.reference, `${rec.schedule_date} 10:15:00`, rec.from_contact, pId, line.qty]
+              [rec.reference, `${rec.schedule_date} 10:20:00`, rec.from_contact, pId, line.qty]
             );
           }
         }
       }
     }
+    console.log('✓ 6 Inbound Receipts (Done, Ready, Draft, Canceled) seeded.');
 
-    console.log('✓ Receipts and lines seeded.');
-
-    // 8. Seed Internal Transfers
+    // 8. Seed Internal Transfers between warehouse locations
     const transfersSeed = [
       {
         reference: 'WH/TRANS/00001',
-        from_location_id: locMap['WH/STOCK'] || 1,
-        to_location_id: locMap['WH/PROD-STAGE'] || 3,
+        from_location_id: locMap['WH/STOCK-A1'] || primaryStockLoc,
+        to_location_id: locMap['WH/PACK-01'] || 3,
         transfer_date: '2026-09-24',
         status: 'done',
         lines: [
-          { sku: 'HDW-BLT-M08', qty: 50 },
-          { sku: 'PKG-ESD-100', qty: 100 },
+          { sku: 'PKG-BOX-50', qty: 40 },
+          { sku: 'PKG-WRP-500', qty: 15 },
         ],
       },
       {
         reference: 'WH/TRANS/00002',
-        from_location_id: locMap['WH/STOCK'] || 1,
-        to_location_id: locMap['SRF/STOCK'] || 2,
+        from_location_id: locMap['WH/STOCK'] || primaryStockLoc,
+        to_location_id: locMap['CGF/STOCK'] || secondaryStockLoc,
+        transfer_date: '2026-09-25',
+        status: 'done',
+        lines: [
+          { sku: 'ELEC-IOT-GW', qty: 10 },
+          { sku: 'HDW-BLT-M8', qty: 25 },
+        ],
+      },
+      {
+        reference: 'WH/TRANS/00003',
+        from_location_id: locMap['WH/IN-A'] || primaryStockLoc,
+        to_location_id: locMap['WH/STOCK-A2'] || primaryStockLoc,
         transfer_date: '2026-09-26',
         status: 'ready',
         lines: [
-          { sku: 'ELEC-SCN-200', qty: 20 },
-          { sku: 'ELEC-PRN-300', qty: 5 },
+          { sku: 'SFT-BOT-42', qty: 15 },
+          { sku: 'SFT-VST-01', qty: 30 },
+        ],
+      },
+      {
+        reference: 'WH/TRANS/00004',
+        from_location_id: locMap['WH/STOCK'] || primaryStockLoc,
+        to_location_id: locMap['NDD/STOCK'] || secondaryStockLoc,
+        transfer_date: '2026-09-28',
+        status: 'draft',
+        lines: [
+          { sku: 'MAT-PLT-25T', qty: 2 },
+          { sku: 'ELEC-SCN-2D', qty: 4 },
         ],
       },
     ];
@@ -593,15 +704,29 @@ async function seed() {
           await conn.query('INSERT INTO transfer_lines (transfer_id, product_id, quantity) VALUES (?, ?, ?)', [trId, pId, line.qty]);
         }
       }
+
+      if (tr.status === 'done') {
+        for (const line of tr.lines) {
+          const pId = prodMap[line.sku];
+          if (pId) {
+            await conn.query(
+              `INSERT IGNORE INTO move_history (reference, move_date, contact, from_location, to_location, product_id, quantity, direction, status)
+               VALUES (?, ?, 'Internal Transfer', 'WH/STOCK', 'CGF/STOCK', ?, ?, 'out', 'DONE')`,
+              [tr.reference, `${tr.transfer_date} 11:30:00`, pId, line.qty]
+            );
+          }
+        }
+      }
     }
+    console.log('✓ 4 Internal Stock Transfers seeded.');
 
-    console.log('✓ Internal transfers seeded.');
-
-    // 9. Seed Stock Adjustments
+    // 9. Seed Stock Adjustments (Cycle Counts, Surplus, Shrinkage)
     const adjustmentsSeed = [
-      { sku: 'ELEC-SCN-200', recorded: 185, counted: 180, delta: -5, notes: 'Annual physical barcode scanner cycle audit' },
-      { sku: 'PKG-BOX-LRG', recorded: 1150, counted: 1200, delta: 50, notes: 'Surplus carton count found in overflow aisle' },
-      { sku: 'HDW-PLT-250', recorded: 18, counted: 18, delta: 0, notes: 'Quarterly heavy hardware verification - 100% match' },
+      { sku: 'PKG-WRP-500', recorded: 182, counted: 180, delta: -2, notes: 'Damaged roll discarded during morning inspection' },
+      { sku: 'ELEC-IOT-GW', recorded: 63, counted: 64, delta: 1, notes: 'Surplus unlogged unit found in staging bin' },
+      { sku: 'HDW-BLT-M8', recorded: 140, counted: 140, delta: 0, notes: 'Quarterly hardware inventory audit - 100% variance match' },
+      { sku: 'SFT-VST-01', recorded: 97, counted: 95, delta: -2, notes: 'Sample units issued for client demonstration' },
+      { sku: 'PKG-BOX-50', recorded: 345, counted: 350, delta: 5, notes: 'Extra bundle accounted for during pallet restack' },
     ];
 
     for (const adj of adjustmentsSeed) {
@@ -610,15 +735,30 @@ async function seed() {
         await conn.query(
           `INSERT INTO stock_adjustments (product_id, location_id, recorded_qty, counted_qty, delta, logged_by, notes)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [pId, stockLocId, adj.recorded, adj.counted, adj.delta, adminId, adj.notes]
+          [pId, primaryStockLoc, adj.recorded, adj.counted, adj.delta, adminId, adj.notes]
+        );
+
+        // Record adjustment in move_history
+        const adjRef = `ADJ/2026/000${pId}`;
+        await conn.query(
+          `INSERT IGNORE INTO move_history (reference, move_date, contact, from_location, to_location, product_id, quantity, direction, status)
+           VALUES (?, NOW() - INTERVAL ? DAY, 'Stock Adjustment', 'WH/STOCK', 'WH/STOCK', ?, ?, ?, 'DONE')`,
+          [adjRef, Math.floor(Math.random() * 5) + 1, pId, Math.abs(adj.delta) || 1, adj.delta >= 0 ? 'in' : 'out']
         );
       }
     }
+    console.log('✓ 5 Physical Count Adjustments seeded.');
 
-    console.log('✓ Stock adjustments audit records seeded.');
-    console.log('🎉 Sample data seeding completed successfully!');
+    console.log('\n======================================================');
+    console.log('🎉 Demo Database Population Completed Successfully!');
+    console.log('======================================================');
+    console.log('Credentials:');
+    console.log('  Manager:  admin1    / Password1!');
+    console.log('  Operator: operator1 / Password1!');
+    console.log('======================================================\n');
   } catch (err) {
-    console.error('Error during seeding:', err);
+    console.error('Error during demo seeding:', err);
+    process.exit(1);
   } finally {
     conn.release();
     process.exit(0);
