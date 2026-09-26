@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import Navbar from './layout/Navbar';
 import Sidebar from './layout/Sidebar';
 import StatusBadge from './common/StatusBadge';
+import ProductList from '../features/products/ProductList';
 import {
   IconPackage,
   IconReceipt,
@@ -25,7 +26,7 @@ import {
   INITIAL_ACTIVITIES,
 } from '../services/mockData';
 
-export default function Dashboard({ onLogout }) {
+export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem('user');
@@ -35,7 +36,7 @@ export default function Dashboard({ onLogout }) {
     }
   });
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState('ALL');
 
@@ -156,7 +157,7 @@ export default function Dashboard({ onLogout }) {
                   </button>
                   <button
                     className="action-btn btn-action-secondary"
-                    onClick={() => showNotice('Opening "Add New Product" modal (SKU, Category, UoM)...')}
+                    onClick={() => setActiveTab('products')}
                   >
                     <IconPackage size={16} />
                     <span>Add Product</span>
@@ -499,51 +500,7 @@ export default function Dashboard({ onLogout }) {
           {/* Sub-Views when clicking Sidebar Tabs */}
           {activeTab === 'products' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Products & Stock</h1>
-                  <p className="page-subheading">Manage inventory SKUs, on-hand levels, costs, and safety stock.</p>
-                </div>
-                <button
-                  className="action-btn btn-action-primary"
-                  onClick={() => showNotice('Product creation dialog will integrate with the Products API.')}
-                >
-                  <IconPlus size={16} /> Add Product
-                </button>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>SKU</th>
-                      <th>Product Name</th>
-                      <th>Category</th>
-                      <th>Unit Cost</th>
-                      <th>On Hand</th>
-                      <th>Free to Use</th>
-                      <th>Min Stock</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((p) => (
-                      <tr key={p.id}>
-                        <td><span className="code-pill">{p.sku}</span></td>
-                        <td className="font-semibold">{p.name}</td>
-                        <td>{p.category}</td>
-                        <td>${p.cost.toFixed(2)}</td>
-                        <td>
-                          <span className={`stock-pill ${p.onHand <= p.minStock ? 'low' : 'ok'}`}>
-                            {p.onHand} {p.uom}
-                          </span>
-                        </td>
-                        <td>{p.freeToUse} {p.uom}</td>
-                        <td>{p.minStock} {p.uom}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ProductList />
             </div>
           )}
 

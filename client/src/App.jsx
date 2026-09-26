@@ -40,6 +40,16 @@ function App() {
             path="/dashboard"
             element={token ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />}
           />
+          <Route
+            path="/products"
+            element={
+              token ? (
+                <Dashboard onLogout={handleLogout} initialTab="products" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
         </Routes>
       </div>
     </Router>
