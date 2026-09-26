@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import SplineBackground from './SplineBackground';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/auth\/?$/, '') + '/auth';
 
@@ -45,6 +46,7 @@ function Login({ onLogin }) {
 
   return (
     <div className="auth-page">
+      <SplineBackground scene="https://prod.spline.design/LHB9hInitRb0kDY1/scene.splinecode" />
       <div className="auth-card">
         <h1>Welcome back</h1>
         <p className="subtitle">Sign in to your account to continue</p>
