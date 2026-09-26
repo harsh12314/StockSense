@@ -1,8 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from './layout/Navbar';
 import Sidebar from './layout/Sidebar';
 import StatusBadge from './common/StatusBadge';
 import ProductList from '../features/products/ProductList';
+import DeliveryList from '../features/deliveries/DeliveryList';
+import ReceiptsList from '../features/receipts/ReceiptsList';
+import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
+import CreateProductModal from '../features/products/CreateProductModal';
+import { receiptsApi } from '../features/receipts/receiptsApi';
+import { get } from '../api/client';
 import {
   IconPackage,
   IconReceipt,
@@ -20,21 +27,17 @@ import {
 } from './common/Icons';
 import {
   INITIAL_WAREHOUSES,
-  INITIAL_PRODUCTS,
-  INITIAL_RECEIPTS,
-  INITIAL_DELIVERIES,
   INITIAL_ACTIVITIES,
 } from '../services/mockData';
-import DeliveryList from '../features/deliveries/DeliveryList';
-import ReceiptsList from '../features/receipts/ReceiptsList';
 
 export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : { loginId: 'Admin', role: 'inventory_manager', email: 'admin@stocksense.io' };
+      return stored ? JSON.parse(stored) : { loginId: 'admin1', role: 'inventory_manager', email: 'admin@stocksense.io' };
     } catch {
-      return { loginId: 'Admin', role: 'inventory_manager', email: 'admin@stocksense.io' };
+      return { loginId: 'admin1', role: 'inventory_manager', email: 'admin@stocksense.io' };
     }
   });
 
@@ -42,19 +45,18 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState('ALL');
 
-  // Filters for Dashboard
-  const [typeFilter, setTypeFilter] = useState('ALL'); // ALL, IN, OUT, ADJUST
-  const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, Ready, Waiting, Draft, Done
-  const [searchQuery, setSearchQuery] = useState('');
+  // Modal states for Quick Actions
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [creatingReceipt, setCreatingReceipt] = useState(false);
 
-  // Data states
-  const [products] = useState(INITIAL_PRODUCTS);
-  const [receipts] = useState(INITIAL_RECEIPTS);
-  const [deliveries] = useState(INITIAL_DELIVERIES);
+  // Live data states
+  const [products, setProducts] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
+  const [deliveryStats, setDeliveryStats] = useState({});
   const [activities] = useState(INITIAL_ACTIVITIES);
   const [warehouses] = useState(INITIAL_WAREHOUSES);
-
-  // Quick Action Modal / Toast mock state
   const [actionNotice, setActionNotice] = useState(null);
 
   const showNotice = (msg) => {
@@ -62,27 +64,94 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
     setTimeout(() => setActionNotice(null), 3500);
   };
 
-  // Calculations & KPI Stats
+  // Sync activeTab with URL / prop changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  const handleSelectTab = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'dashboard') {
+      navigate('/dashboard');
+    } else {
+      navigate(`/${tabId}`);
+    }
+  };
+
+  // Fetch live operational data from backend
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const [prodRes, recRes, delRes, statsRes] = await Promise.all([
+        get('/products').catch(() => ({ data: [] })),
+        get('/receipts').catch(() => ({ data: [] })),
+        get('/deliveries').catch(() => ({ data: [] })),
+        get('/deliveries/stats').catch(() => ({ data: {} })),
+      ]);
+
+      if (prodRes?.data) setProducts(prodRes.data);
+      if (recRes?.data) setReceipts(recRes.data);
+      if (delRes?.data) setDeliveries(delRes.data);
+      if (statsRes?.data) setDeliveryStats(statsRes.data);
+    } catch (err) {
+      console.warn('Dashboard data fetch error:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData, activeTab]);
+
+  // Quick Action Handlers
+  const handleCreateReceipt = async () => {
+    try {
+      setCreatingReceipt(true);
+      const newRec = await receiptsApi.create({ to_location_id: 1 });
+      if (newRec && newRec.id) {
+        showNotice(`Created new receipt ${newRec.reference || 'WH/IN'}`);
+        navigate(`/receipts/${newRec.id}`);
+      } else {
+        handleSelectTab('receipts');
+      }
+    } catch (err) {
+      showNotice(`Error creating receipt: ${err.message}`);
+    } finally {
+      setCreatingReceipt(false);
+    }
+  };
+
+  // Filters for Dashboard Activity feed
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Calculations & KPI Stats based on real database records
   const lowStockItems = useMemo(() => {
-    return products.filter((p) => p.onHand <= p.minStock);
+    return products.filter((p) => {
+      const onHand = Number(p.on_hand_qty ?? p.onHand ?? 0);
+      const minStock = Number(p.reordering_rule ?? p.minStock ?? 5);
+      return onHand <= minStock;
+    });
   }, [products]);
 
   const pendingReceipts = useMemo(() => {
-    return receipts.filter((r) => r.status !== 'Done' && r.status !== 'Canceled');
+    return receipts.filter((r) => {
+      const st = r.status?.toLowerCase();
+      return st !== 'done' && st !== 'canceled';
+    });
   }, [receipts]);
 
   const pendingDeliveries = useMemo(() => {
-    return deliveries.filter((d) => d.status !== 'Done' && d.status !== 'Canceled');
+    return deliveries.filter((d) => {
+      const st = d.status?.toLowerCase();
+      return st !== 'done' && st !== 'canceled';
+    });
   }, [deliveries]);
 
   // Filtered Activities
   const filteredActivities = useMemo(() => {
     return activities.filter((act) => {
-      // Type filter
       if (typeFilter !== 'ALL' && act.type !== typeFilter) return false;
-      // Status filter
       if (statusFilter !== 'ALL' && act.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
-      // Search query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matchesRef = act.reference.toLowerCase().includes(q);
@@ -96,10 +165,10 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
   return (
     <div className="stocksense-layout">
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         counts={{
@@ -145,28 +214,32 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                 <div className="quick-actions-toolbar">
                   <button
                     className="action-btn btn-action-primary"
-                    onClick={() => showNotice('Opening "New Receipt" modal for incoming vendor goods...')}
+                    onClick={handleCreateReceipt}
+                    disabled={creatingReceipt}
                   >
                     <IconPlus size={16} />
-                    <span>New Receipt</span>
+                    <span>{creatingReceipt ? 'Creating...' : '+ New Receipt'}</span>
                   </button>
+
                   <button
                     className="action-btn btn-action-secondary"
-                    onClick={() => showNotice('Opening "New Delivery Order" modal for customer shipment...')}
+                    onClick={() => setIsDeliveryModalOpen(true)}
                   >
                     <IconTruck size={16} />
-                    <span>New Delivery</span>
+                    <span>+ New Delivery</span>
                   </button>
+
                   <button
                     className="action-btn btn-action-secondary"
-                    onClick={() => setActiveTab('products')}
+                    onClick={() => setIsProductModalOpen(true)}
                   >
                     <IconPackage size={16} />
                     <span>Add Product</span>
                   </button>
+
                   <button
                     className="action-btn btn-action-secondary"
-                    onClick={() => showNotice('Opening "Stock Adjustment" delta counter...')}
+                    onClick={() => handleSelectTab('products')}
                   >
                     <IconAdjust size={16} />
                     <span>Adjust Stock</span>
@@ -179,7 +252,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                 {/* 1. Total Products */}
                 <div
                   className="kpi-card"
-                  onClick={() => setActiveTab('products')}
+                  onClick={() => handleSelectTab('products')}
                   role="button"
                   tabIndex={0}
                 >
@@ -192,11 +265,11 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="kpi-body">
                     <span className="kpi-value">{products.length}</span>
                     <span className="kpi-trend positive">
-                      <IconTrendingUp size={14} /> +4 this week
+                      <IconTrendingUp size={14} /> Active SKUs
                     </span>
                   </div>
                   <div className="kpi-footer">
-                    <span>Active SKUs across {warehouses.length} locations</span>
+                    <span>Catalogued in central database</span>
                   </div>
                 </div>
 
@@ -228,7 +301,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                 {/* 3. Pending Receipts */}
                 <div
                   className="kpi-card"
-                  onClick={() => setActiveTab('receipts')}
+                  onClick={() => handleSelectTab('receipts')}
                   role="button"
                   tabIndex={0}
                 >
@@ -241,7 +314,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="kpi-body">
                     <span className="kpi-value">{pendingReceipts.length}</span>
                     <span className="kpi-badge badge-amber">
-                      {receipts.filter((r) => r.isLate).length} Late
+                      {receipts.filter((r) => r.status?.toLowerCase() === 'ready').length} Ready
                     </span>
                   </div>
                   <div className="kpi-footer">
@@ -252,7 +325,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                 {/* 4. Pending Deliveries */}
                 <div
                   className="kpi-card"
-                  onClick={() => setActiveTab('deliveries')}
+                  onClick={() => handleSelectTab('deliveries')}
                   role="button"
                   tabIndex={0}
                 >
@@ -265,7 +338,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="kpi-body">
                     <span className="kpi-value">{pendingDeliveries.length}</span>
                     <span className="kpi-badge badge-blue">
-                      {deliveries.filter((d) => d.status === 'Ready').length} Ready to Pack
+                      {deliveries.filter((d) => d.status?.toLowerCase() === 'ready').length} Ready to Ship
                     </span>
                   </div>
                   <div className="kpi-footer">
@@ -276,7 +349,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
               {/* Operations Pipeline Breakdown */}
               <section className="pipeline-overview-section">
-                <div className="pipeline-card">
+                <div className="pipeline-card" onClick={() => handleSelectTab('receipts')} style={{ cursor: 'pointer' }}>
                   <div className="pipeline-card-header">
                     <div className="pipeline-title-group">
                       <IconReceipt size={18} className="text-amber" />
@@ -287,27 +360,22 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="pipeline-steps-bar">
                     <div className="pipeline-step step-draft">
                       <span className="step-label">Draft</span>
-                      <span className="step-count">{receipts.filter((r) => r.status === 'Draft').length}</span>
-                    </div>
-                    <div className="pipeline-step-arrow">→</div>
-                    <div className="pipeline-step step-waiting">
-                      <span className="step-label">Waiting</span>
-                      <span className="step-count">{receipts.filter((r) => r.status === 'Waiting').length}</span>
+                      <span className="step-count">{receipts.filter((r) => r.status?.toLowerCase() === 'draft').length}</span>
                     </div>
                     <div className="pipeline-step-arrow">→</div>
                     <div className="pipeline-step step-ready">
                       <span className="step-label">Ready</span>
-                      <span className="step-count">{receipts.filter((r) => r.status === 'Ready').length}</span>
+                      <span className="step-count">{receipts.filter((r) => r.status?.toLowerCase() === 'ready').length}</span>
                     </div>
                     <div className="pipeline-step-arrow">→</div>
                     <div className="pipeline-step step-done">
                       <span className="step-label">Done</span>
-                      <span className="step-count">{receipts.filter((r) => r.status === 'Done').length}</span>
+                      <span className="step-count">{receipts.filter((r) => r.status?.toLowerCase() === 'done').length}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pipeline-card">
+                <div className="pipeline-card" onClick={() => handleSelectTab('deliveries')} style={{ cursor: 'pointer' }}>
                   <div className="pipeline-card-header">
                     <div className="pipeline-title-group">
                       <IconTruck size={18} className="text-blue" />
@@ -318,22 +386,22 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   <div className="pipeline-steps-bar">
                     <div className="pipeline-step step-draft">
                       <span className="step-label">Draft</span>
-                      <span className="step-count">{deliveries.filter((d) => d.status === 'Draft').length}</span>
+                      <span className="step-count">{deliveries.filter((d) => d.status?.toLowerCase() === 'draft').length}</span>
                     </div>
                     <div className="pipeline-step-arrow">→</div>
                     <div className="pipeline-step step-waiting">
                       <span className="step-label">Waiting</span>
-                      <span className="step-count">{deliveries.filter((d) => d.status === 'Waiting').length}</span>
+                      <span className="step-count">{deliveries.filter((d) => d.status?.toLowerCase() === 'waiting').length}</span>
                     </div>
                     <div className="pipeline-step-arrow">→</div>
                     <div className="pipeline-step step-ready">
                       <span className="step-label">Ready</span>
-                      <span className="step-count">{deliveries.filter((d) => d.status === 'Ready').length}</span>
+                      <span className="step-count">{deliveries.filter((d) => d.status?.toLowerCase() === 'ready').length}</span>
                     </div>
                     <div className="pipeline-step-arrow">→</div>
                     <div className="pipeline-step step-done">
                       <span className="step-label">Done</span>
-                      <span className="step-count">{deliveries.filter((d) => d.status === 'Done').length}</span>
+                      <span className="step-count">{deliveries.filter((d) => d.status?.toLowerCase() === 'done').length}</span>
                     </div>
                   </div>
                 </div>
@@ -362,30 +430,38 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {lowStockItems.map((prod) => (
-                          <tr key={prod.id} className="low-stock-row">
-                            <td>
-                              <div className="prod-cell-main">
-                                <span className="prod-name">{prod.name}</span>
-                                <span className="prod-sku">{prod.sku} • {prod.category}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="onhand-pill alert">{prod.onHand} {prod.uom}</span>
-                            </td>
-                            <td>
-                              <span className="minstock-label">{prod.minStock} {prod.uom}</span>
-                            </td>
-                            <td>
-                              <button
-                                className="btn-reorder-tiny"
-                                onClick={() => showNotice(`Initiated reorder receipt draft for ${prod.name}`)}
-                              >
-                                Reorder
-                              </button>
+                        {lowStockItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                              All items are well stocked above safety threshold.
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          lowStockItems.map((prod) => (
+                            <tr key={prod.id} className="low-stock-row">
+                              <td>
+                                <div className="prod-cell-main">
+                                  <span className="prod-name">{prod.name}</span>
+                                  <span className="prod-sku">{prod.sku} • {prod.category_name || prod.category || 'General'}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="onhand-pill alert">{prod.on_hand_qty ?? prod.onHand ?? 0} {prod.unit_of_measure || prod.uom || 'units'}</span>
+                              </td>
+                              <td>
+                                <span className="minstock-label">{prod.reordering_rule ?? prod.minStock ?? 5} {prod.unit_of_measure || prod.uom || 'units'}</span>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn-reorder-tiny"
+                                  onClick={handleCreateReceipt}
+                                >
+                                  Reorder
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -400,7 +476,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                     </div>
                     <button
                       className="box-link-btn"
-                      onClick={() => setActiveTab('ledger')}
+                      onClick={() => handleSelectTab('ledger')}
                     >
                       View Full Ledger →
                     </button>
@@ -605,6 +681,29 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           )}
         </main>
       </div>
+
+      {/* Interactive Creation Modals */}
+      <CreateDeliveryModal
+        isOpen={isDeliveryModalOpen}
+        onClose={() => setIsDeliveryModalOpen(false)}
+        onCreated={(newDelivery) => {
+          loadDashboardData();
+          setIsDeliveryModalOpen(false);
+          if (newDelivery && newDelivery.id) {
+            navigate(`/deliveries/${newDelivery.id}`);
+          }
+        }}
+      />
+
+      <CreateProductModal
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        onCreated={() => {
+          loadDashboardData();
+          setIsProductModalOpen(false);
+          handleSelectTab('products');
+        }}
+      />
     </div>
   );
 }
