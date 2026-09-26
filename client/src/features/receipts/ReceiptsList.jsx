@@ -214,8 +214,12 @@ export default function ReceiptsList() {
       {/* ── Page header ── */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Receipts</h1>
-          <p className="page-subtitle">Manage incoming stock from suppliers</p>
+          <h1 className="page-title" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+            Incoming Receipts
+          </h1>
+          <p className="page-subtitle" style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#64748B' }}>
+            Receive, inspect, and register inbound shipments from vendors into warehouse locations
+          </p>
         </div>
         <div className="header-actions">
           <div className="view-toggle" role="group" aria-label="View mode">

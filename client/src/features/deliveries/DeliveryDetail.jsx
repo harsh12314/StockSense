@@ -136,6 +136,14 @@ export default function DeliveryDetail() {
 
   useEffect(() => { loadDelivery(); }, [id]);
 
+  useEffect(() => {
+    if (delivery?.reference) {
+      document.title = `${delivery.reference} — Delivery Order Details | StockSense`;
+    } else {
+      document.title = 'Delivery Order Details | StockSense';
+    }
+  }, [delivery?.reference]);
+
   async function loadDelivery() {
     setLoading(true);
     setError(null);

@@ -73,6 +73,24 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  // Dynamically update document title on activeTab switch
+  useEffect(() => {
+    const tabTitles = {
+      dashboard: 'Operations Dashboard | StockSense',
+      products: 'Products & Inventory | StockSense',
+      receipts: 'Incoming Receipts | StockSense',
+      deliveries: 'Delivery Orders | StockSense',
+      transfers: 'Internal Stock Transfers | StockSense',
+      ledger: 'Stock Movements Ledger | StockSense',
+      adjustments: 'Stock Adjustments & Counts | StockSense',
+      warehouses: 'Warehouses & Locations | StockSense',
+      settings: 'Warehouse & System Settings | StockSense',
+    };
+    if (tabTitles[activeTab]) {
+      document.title = tabTitles[activeTab];
+    }
+  }, [activeTab]);
+
   const handleSelectTab = (tabId) => {
     setActiveTab(tabId);
     if (tabId === 'dashboard') {

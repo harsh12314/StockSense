@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
@@ -10,6 +10,49 @@ import DeliveryDetail from './features/deliveries/DeliveryDetail';
 import TransferDetail from './features/transfers/TransferDetail';
 import './index.css';
 import './App.css';
+
+function PageTitleManager() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    let title = 'StockSense — Intelligent Warehouse Operations';
+
+    if (path === '/login') {
+      title = 'Sign In | StockSense';
+    } else if (path === '/signup') {
+      title = 'Create Account | StockSense';
+    } else if (path === '/dashboard' || path === '/') {
+      title = 'Operations Dashboard | StockSense';
+    } else if (path === '/products') {
+      title = 'Products & Inventory | StockSense';
+    } else if (path === '/receipts') {
+      title = 'Incoming Receipts | StockSense';
+    } else if (path.startsWith('/receipts/')) {
+      title = 'Receipt Order Details | StockSense';
+    } else if (path === '/deliveries') {
+      title = 'Delivery Orders | StockSense';
+    } else if (path.startsWith('/deliveries/')) {
+      title = 'Delivery Order Details | StockSense';
+    } else if (path === '/transfers') {
+      title = 'Internal Stock Transfers | StockSense';
+    } else if (path.startsWith('/transfers/')) {
+      title = 'Transfer Details | StockSense';
+    } else if (path === '/ledger' || path === '/moves') {
+      title = 'Stock Movements Ledger | StockSense';
+    } else if (path === '/adjustments') {
+      title = 'Stock Adjustments & Counts | StockSense';
+    } else if (path === '/warehouses') {
+      title = 'Warehouses & Locations | StockSense';
+    } else if (path === '/settings') {
+      title = 'Warehouse & System Settings | StockSense';
+    }
+
+    document.title = title;
+  }, [location.pathname]);
+
+  return null;
+}
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -28,6 +71,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <PageTitleManager />
       <div className="app">
         <Routes>
           {/* Landing / Default */}

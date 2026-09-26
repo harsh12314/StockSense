@@ -210,9 +210,11 @@ export default function ProductList() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h2>Products &amp; Stock</h2>
+          <h1 className="page-heading" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+            Products &amp; Stock Inventory
+          </h1>
           <p style={{ color: 'var(--ink-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
-            Manage your product catalogue — click any <strong>stock number</strong> to edit it inline.
+            Manage catalogue, monitor reorder safety thresholds, and edit stock inline across storage zones.
           </p>
         </div>
         <div className="page-header-actions">

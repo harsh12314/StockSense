@@ -235,6 +235,14 @@ export default function ReceiptDetail() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (receipt?.reference) {
+      document.title = `${receipt.reference} — Receipt Details | StockSense`;
+    } else {
+      document.title = 'Receipt Details | StockSense';
+    }
+  }, [receipt?.reference]);
+
   const isEditable = receipt && !['done', 'canceled'].includes(receipt.status);
   const totalQty   = receipt?.lines.reduce((s, l) => s + l.quantity, 0) ?? 0;
 

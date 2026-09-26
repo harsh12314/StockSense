@@ -50,6 +50,14 @@ export default function TransferDetail() {
     loadTransfer();
   }, [id]);
 
+  useEffect(() => {
+    if (transfer?.reference) {
+      document.title = `${transfer.reference} — Transfer Details | StockSense`;
+    } else {
+      document.title = 'Transfer Details | StockSense';
+    }
+  }, [transfer?.reference]);
+
   async function loadTransfer() {
     setLoading(true);
     setError(null);

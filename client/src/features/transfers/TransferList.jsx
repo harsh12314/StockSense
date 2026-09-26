@@ -144,10 +144,10 @@ export default function TransferList({ onOpenTransfer }) {
       {/* Top Page Header */}
       <div className="transfers-header">
         <div className="transfers-title-area">
-          <h2>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}>
             <ArrowRightLeft className="text-purple" size={24} />
-            Internal Transfers
-          </h2>
+            Internal Stock Transfers
+          </h1>
           <p>
             Move inventory between warehouse locations with atomic stock deduction and ledger
             auditing.
