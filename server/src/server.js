@@ -23,6 +23,7 @@ app.use('/api/products',    require('./routes/products'));
 app.use('/api/adjustments', require('./routes/adjustments'));
 app.use('/api/ledger',      require('./routes/moves'));
 app.use('/api/moves',       require('./routes/moves'));
+app.use('/api/settings',    require('./routes/settings'));
 
 // ── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {

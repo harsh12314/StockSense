@@ -10,6 +10,7 @@ const referenceRoutes  = require('./src/routes/reference');
 const productRoutes    = require('./src/routes/products');
 const adjustmentRoutes = require('./src/routes/adjustments');
 const movesRoutes      = require('./src/routes/moves');
+const settingsRoutes   = require('./src/routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,7 @@ app.use('/api/products',    productRoutes);
 app.use('/api/adjustments', adjustmentRoutes);
 app.use('/api/ledger',      movesRoutes);
 app.use('/api/moves',       movesRoutes);
+app.use('/api/settings',    settingsRoutes);
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {

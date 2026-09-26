@@ -8,6 +8,7 @@ import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
 import StockLedger from '../features/ledger/StockLedger';
 import AdjustmentList from '../features/adjustments/AdjustmentList';
+import WarehouseSettings from '../features/settings/WarehouseSettings';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
@@ -84,7 +85,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
-        get('/ref/warehouses').catch(() => ({ data: [] })),
+        get('/settings/warehouses').catch(() => get('/ref/warehouses')).catch(() => ({ data: [] })),
         get('/ledger?limit=30').catch(() => get('/moves?limit=30')).catch(() => get('/ref/moves')).catch(() => ({ data: [] })),
       ]);
 
@@ -98,7 +99,9 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           id: w.id,
           code: w.short_code || w.code || `WH${w.id}`,
           name: w.name,
-          location: w.address || 'Main Storage Facility',
+          location: w.address || w.location || 'Main Storage Facility',
+          locations: w.locations || [],
+          total_stock_qty: w.total_stock_qty || 0,
         })));
       }
 
@@ -644,35 +647,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'warehouses' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Warehouses & Storage Facilities</h1>
-                  <p className="page-subheading">Configure multi-warehouse storage units, short codes, and internal locations.</p>
-                </div>
-              </div>
-
-              <div className="warehouse-grid">
-                {warehouses.length === 0 ? (
-                  <div className="empty-state-card" style={{ gridColumn: '1 / -1' }}>
-                    <p>No warehouses registered yet.</p>
-                  </div>
-                ) : (
-                  warehouses.map((wh) => (
-                    <div key={wh.id} className="warehouse-card">
-                      <div className="wh-header">
-                        <IconWarehouse size={22} className="text-purple" />
-                        <span className="wh-code">{wh.code}</span>
-                      </div>
-                      <h3>{wh.name}</h3>
-                      <p className="wh-location">{wh.location}</p>
-                      <div className="wh-stats">
-                        <span>Status: <strong className="text-green">Active</strong></span>
-                        <span>Facility ID: <strong>#{wh.id}</strong></span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              <WarehouseSettings />
             </div>
           )}
 
@@ -680,17 +655,23 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
             <AdjustmentList />
           )}
 
-          {(activeTab === 'transfers' || activeTab === 'settings') && (
+          {activeTab === 'settings' && (
+            <div className="view-container">
+              <WarehouseSettings />
+            </div>
+          )}
+
+          {activeTab === 'transfers' && (
             <div className="view-container">
               <div className="view-header">
                 <div>
-                  <h1 className="page-heading" style={{ textTransform: 'capitalize' }}>{activeTab}</h1>
+                  <h1 className="page-heading" style={{ textTransform: 'capitalize' }}>Transfers</h1>
                   <p className="page-subheading">Configured for active warehouse operations.</p>
                 </div>
               </div>
               <div className="empty-module-card">
                 <IconAdjust size={36} className="text-purple" />
-                <h3>{activeTab.toUpperCase()} Module Ready</h3>
+                <h3>TRANSFERS Module Ready</h3>
                 <p>This module UI shell is active and ready to link with backend migration controllers.</p>
               </div>
             </div>
