@@ -1,12 +1,25 @@
 // client/src/api/client.js
-// Standard HTTP client for API requests with auto Bearer auth header
+// Universal API client supporting both direct methods (get, post, put, del) and api object
 
 const BASE_URL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL.replace(/\/auth\/?$/, '')
   : 'http://localhost:3001/api';
 
-async function request(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
+export function getToken() {
+  return localStorage.getItem('token');
+}
+
+export function getUser() {
+  try {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function request(endpoint, options = {}) {
+  const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -21,27 +34,31 @@ async function request(endpoint, options = {}) {
     headers,
   };
 
-  const response = await fetch(url, config);
-
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
+  if (config.body && typeof config.body !== 'string') {
+    config.body = JSON.stringify(config.body);
   }
 
-  if (!response.ok || (data && data.success === false)) {
-    const errorMsg = data?.error?.message || `Request failed with status ${response.status}`;
+  const response = await fetch(url, config);
+
+  let json;
+  try {
+    json = await response.json();
+  } catch {
+    json = null;
+  }
+
+  if (!response.ok || (json && json.success === false)) {
+    const errorMsg = json?.error?.message || `Request failed with status ${response.status}`;
     const err = new Error(errorMsg);
     err.status = response.status;
-    err.data = data;
+    err.data = json;
     throw err;
   }
 
-  return data;
+  return json;
 }
 
-export function get(endpoint, params) {
+export async function get(endpoint, params) {
   let url = endpoint;
   if (params) {
     const query = new URLSearchParams();
@@ -58,30 +75,50 @@ export function get(endpoint, params) {
   return request(url, { method: 'GET' });
 }
 
-export function post(endpoint, body) {
+export async function post(endpoint, body) {
   return request(endpoint, {
     method: 'POST',
-    body: body ? JSON.stringify(body) : undefined,
+    body,
   });
 }
 
-export function put(endpoint, body) {
+export async function put(endpoint, body) {
   return request(endpoint, {
     method: 'PUT',
-    body: body ? JSON.stringify(body) : undefined,
+    body,
   });
 }
 
-export function patch(endpoint, body) {
+export async function patch(endpoint, body) {
   return request(endpoint, {
     method: 'PATCH',
-    body: body ? JSON.stringify(body) : undefined,
+    body,
   });
 }
 
-export function del(endpoint) {
+export async function del(endpoint) {
   return request(endpoint, { method: 'DELETE' });
 }
+
+// Compact helper object returning json.data directly for modular feature APIs
+export const api = {
+  get: async (path) => {
+    const res = await request(path, { method: 'GET' });
+    return res && res.data !== undefined ? res.data : res;
+  },
+  post: async (path, body) => {
+    const res = await request(path, { method: 'POST', body });
+    return res && res.data !== undefined ? res.data : res;
+  },
+  put: async (path, body) => {
+    const res = await request(path, { method: 'PUT', body });
+    return res && res.data !== undefined ? res.data : res;
+  },
+  delete: async (path) => {
+    const res = await request(path, { method: 'DELETE' });
+    return res && res.data !== undefined ? res.data : res;
+  },
+};
 
 export default {
   get,
@@ -89,4 +126,7 @@ export default {
   put,
   patch,
   del,
+  api,
+  getToken,
+  getUser,
 };
