@@ -118,20 +118,19 @@ export default function WarehouseSettings() {
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          backgroundColor: 'rgba(16, 185, 129, 0.95)',
+          backgroundColor: '#0F172A',
           color: '#ffffff',
           padding: '12px 20px',
-          borderRadius: '10px',
+          borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
           zIndex: 9999,
           fontWeight: 600,
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.2)'
+          border: '1px solid #334155'
         }}>
-          <CheckCircle2 size={18} />
+          <CheckCircle2 size={18} color="#22C55E" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -146,15 +145,24 @@ export default function WarehouseSettings() {
         gap: '16px'
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Building2 size={26} color="#818cf8" />
-            <h1 className="page-heading" style={{ margin: 0, fontSize: '1.6rem', fontWeight: 700, color: '#f8fafc' }}>
-              Warehouses & Storage Locations
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '12px',
+              backgroundColor: '#EBF3FC',
+              border: '1px solid #BFDBFE',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4A90E2',
+            }}>
+              <Building2 size={22} />
+            </div>
+            <div>
+              <h1 className="page-heading" style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                Warehouses & Storage Locations
+              </h1>
+              <p className="page-subheading" style={{ margin: '4px 0 0', color: '#64748B', fontSize: '0.88rem' }}>
+                Manage physical distribution centers, internal aisles, shelves, and stock allocation bins.
+              </p>
+            </div>
           </div>
-          <p className="page-subheading" style={{ margin: '6px 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>
-            Manage physical distribution centers, internal aisles, shelves, and stock allocation bins.
-          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -168,23 +176,26 @@ export default function WarehouseSettings() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              backgroundColor: 'rgba(51, 65, 85, 0.6)',
-              color: '#cbd5e1',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: '#FFFFFF',
+              color: '#334155',
+              border: '1px solid #CBD5E1',
               padding: '9px 16px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.84rem',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.8)';
-              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.backgroundColor = '#F8FAFC';
+              e.currentTarget.style.color = '#0F172A';
+              e.currentTarget.style.borderColor = '#94A3B8';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)';
-              e.currentTarget.style.color = '#cbd5e1';
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+              e.currentTarget.style.color = '#334155';
+              e.currentTarget.style.borderColor = '#CBD5E1';
             }}
           >
             <Plus size={16} />
@@ -200,24 +211,26 @@ export default function WarehouseSettings() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              background: '#4A90E2',
               color: '#ffffff',
-              border: 'none',
+              border: '1px solid #4A90E2',
               padding: '9px 18px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.84rem',
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(74, 144, 226, 0.25)',
+              transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#3B7DC4';
               e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 18px rgba(99, 102, 241, 0.45)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.35)';
             }}
             onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#4A90E2';
               e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 14px rgba(99, 102, 241, 0.35)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 144, 226, 0.25)';
             }}
           >
             <Plus size={16} />
@@ -233,95 +246,134 @@ export default function WarehouseSettings() {
         gap: '16px',
         marginBottom: '24px',
       }}>
+        {/* Warehouses KPI */}
         <div style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.07)',
-          borderRadius: '12px',
-          padding: '18px 20px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #EDF2F7',
+          borderRadius: '18px',
+          padding: '22px 24px',
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-        }}>
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.06)';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
+        }}
+        >
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(99, 102, 241, 0.15)',
-            color: '#818cf8',
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            backgroundColor: '#EBF3FC',
+            color: '#4A90E2',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}>
             <Warehouse size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Warehouses
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2, marginTop: '2px' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.1, marginTop: '4px' }}>
               {stats.totalFacilities}
             </div>
           </div>
         </div>
 
+        {/* Storage Bins KPI */}
         <div style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.07)',
-          borderRadius: '12px',
-          padding: '18px 20px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #EDF2F7',
+          borderRadius: '18px',
+          padding: '22px 24px',
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-        }}>
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.06)';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
+        }}
+        >
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(14, 165, 233, 0.15)',
-            color: '#38bdf8',
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            backgroundColor: '#EBF3FC',
+            color: '#2563EB',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}>
             <MapPin size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Storage Bins / Locations
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2, marginTop: '2px' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.1, marginTop: '4px' }}>
               {stats.totalBins}
             </div>
           </div>
         </div>
 
+        {/* Total Stock KPI */}
         <div style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.07)',
-          borderRadius: '12px',
-          padding: '18px 20px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #EDF2F7',
+          borderRadius: '18px',
+          padding: '22px 24px',
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-        }}>
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
+          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.06)';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.04)';
+        }}
+        >
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            color: '#34d399',
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            backgroundColor: '#DCFCE7',
+            color: '#16A34A',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}>
             <Boxes size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Total On-Hand Inventory
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1.2, marginTop: '2px' }}>
-              {stats.totalStock.toLocaleString()} <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>units</span>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.1, marginTop: '4px' }}>
+              {stats.totalStock.toLocaleString()} <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 500 }}>units</span>
             </div>
           </div>
         </div>
@@ -332,11 +384,12 @@ export default function WarehouseSettings() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(30, 41, 59, 0.4)',
-        border: '1px solid rgba(255, 255, 255, 0.07)',
-        borderRadius: '12px',
-        padding: '12px 18px',
-        marginBottom: '20px',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #EDF2F7',
+        borderRadius: '14px',
+        padding: '14px 18px',
+        marginBottom: '24px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
         flexWrap: 'wrap',
         gap: '12px',
       }}>
@@ -344,15 +397,15 @@ export default function WarehouseSettings() {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#F8FAFD',
+          border: '1px solid #CBD5E1',
           borderRadius: '8px',
-          padding: '6px 14px',
+          padding: '8px 14px',
           flex: '1',
           maxWidth: '400px',
           minWidth: '240px',
         }}>
-          <Search size={16} color="#64748b" />
+          <Search size={16} color="#64748B" />
           <input
             type="text"
             placeholder="Search warehouse code, name, location..."
@@ -361,7 +414,7 @@ export default function WarehouseSettings() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#f8fafc',
+              color: '#0F172A',
               fontSize: '0.875rem',
               width: '100%',
               outline: 'none',
@@ -376,18 +429,27 @@ export default function WarehouseSettings() {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            backgroundColor: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: '#94a3b8',
-            padding: '7px 14px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #CBD5E1',
+            color: '#334155',
+            padding: '8px 16px',
             borderRadius: '8px',
             fontSize: '0.82rem',
-            fontWeight: 500,
+            fontWeight: 600,
             cursor: 'pointer',
-            transition: 'all 0.2s',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'all 0.15s ease',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.color = '#f8fafc')}
-          onMouseOut={(e) => (e.currentTarget.style.color = '#94a3b8')}
+          onMouseOver={(e) => {
+            e.currentTarget.style.color = '#0F172A';
+            e.currentTarget.style.backgroundColor = '#F8FAFC';
+            e.currentTarget.style.borderColor = '#94A3B8';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.color = '#334155';
+            e.currentTarget.style.backgroundColor = '#FFFFFF';
+            e.currentTarget.style.borderColor = '#CBD5E1';
+          }}
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           <span>Refresh</span>
@@ -397,18 +459,18 @@ export default function WarehouseSettings() {
       {/* Error state */}
       {error && (
         <div style={{
-          backgroundColor: 'rgba(239, 68, 68, 0.12)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          color: '#fca5a5',
-          borderRadius: '10px',
-          padding: '14px 18px',
+          backgroundColor: '#FEE2E2',
+          border: '1px solid #FECACA',
+          color: '#DC2626',
+          borderRadius: '12px',
+          padding: '16px 20px',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
           marginBottom: '20px',
           fontSize: '0.88rem',
         }}>
-          <AlertCircle size={18} />
+          <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
@@ -420,39 +482,54 @@ export default function WarehouseSettings() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '60px 20px',
-          color: '#94a3b8',
-          gap: '12px',
+          padding: '70px 20px',
+          color: '#64748B',
+          gap: '14px',
         }}>
-          <RefreshCw size={28} className="animate-spin text-purple" />
+          <RefreshCw size={28} className="animate-spin text-blue" />
           <p style={{ margin: 0, fontSize: '0.95rem' }}>Loading warehouse facility hierarchy...</p>
         </div>
       ) : filteredWarehouses.length === 0 ? (
         <div style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.3)',
-          border: '1px dashed rgba(255, 255, 255, 0.12)',
-          borderRadius: '14px',
-          padding: '50px 20px',
+          backgroundColor: '#FFFFFF',
+          border: '1.5px dashed #CBD5E1',
+          borderRadius: '18px',
+          padding: '56px 24px',
           textAlign: 'center',
-          color: '#94a3b8',
+          color: '#64748B',
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.02)',
         }}>
-          <Warehouse size={40} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-          <h3 style={{ color: '#f8fafc', margin: '0 0 6px', fontSize: '1.1rem' }}>No warehouses match your filter</h3>
-          <p style={{ margin: '0 0 16px', fontSize: '0.88rem' }}>Create a new warehouse or adjust your search terms.</p>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            backgroundColor: '#EBF3FC',
+            border: '1px solid #BFDBFE',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            color: '#4A90E2',
+          }}>
+            <Warehouse size={28} />
+          </div>
+          <h3 style={{ color: '#0F172A', margin: '0 0 6px', fontSize: '1.15rem', fontWeight: 800 }}>No warehouses match your filter</h3>
+          <p style={{ margin: '0 0 20px', fontSize: '0.88rem', color: '#64748B' }}>Create a new warehouse or adjust your search terms.</p>
           <button
             onClick={() => {
               setEditingWarehouse(null);
               setIsWarehouseModalOpen(true);
             }}
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              background: '#4A90E2',
               color: '#ffffff',
-              border: 'none',
-              padding: '8px 18px',
-              borderRadius: '8px',
+              border: '1px solid #4A90E2',
+              padding: '9px 20px',
+              borderRadius: '10px',
               fontWeight: 600,
               fontSize: '0.85rem',
               cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(74, 144, 226, 0.25)',
             }}
           >
             Create Warehouse
@@ -471,25 +548,25 @@ export default function WarehouseSettings() {
               <div
                 key={wh.id}
                 style={{
-                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '14px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #EDF2F7',
+                  borderRadius: '18px',
                   overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
                   transition: 'border-color 0.2s',
                 }}
               >
                 {/* Warehouse Master Header */}
                 <div
                   style={{
-                    padding: '18px 22px',
+                    padding: '20px 24px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: '16px',
-                    borderBottom: !isCollapsed ? '1px solid rgba(255, 255, 255, 0.06)' : 'none',
-                    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+                    borderBottom: !isCollapsed ? '1px solid #EDF2F7' : 'none',
+                    backgroundColor: '#FFFFFF',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1', minWidth: '280px' }}>
@@ -498,7 +575,7 @@ export default function WarehouseSettings() {
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: '#94a3b8',
+                        color: '#64748B',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -511,39 +588,39 @@ export default function WarehouseSettings() {
                     </button>
 
                     <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                      color: '#818cf8',
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '12px',
+                      backgroundColor: '#EBF3FC',
+                      color: '#4A90E2',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      <Warehouse size={20} />
+                      <Warehouse size={22} />
                     </div>
 
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0F172A' }}>
                           {wh.name}
                         </h2>
                         <span style={{
-                          backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                          color: '#a5b4fc',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
-                          padding: '2px 8px',
+                          backgroundColor: '#EBF3FC',
+                          color: '#4A90E2',
+                          border: '1px solid #BFDBFE',
+                          padding: '3px 9px',
                           borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
                           letterSpacing: '0.04em',
                         }}>
                           {wh.short_code || wh.code}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', color: '#94a3b8', fontSize: '0.82rem' }}>
-                        <MapPin size={13} color="#64748b" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', color: '#64748B', fontSize: '0.84rem' }}>
+                        <MapPin size={13} color="#94A3B8" />
                         <span>{wh.address || wh.location || 'Standard Facility'}</span>
                       </div>
                     </div>
@@ -554,19 +631,19 @@ export default function WarehouseSettings() {
                     <div style={{
                       display: 'flex',
                       gap: '16px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.5)',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      borderRadius: '8px',
-                      padding: '6px 14px',
+                      backgroundColor: '#F8FAFD',
+                      border: '1px solid #EDF2F7',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
                     }}>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Locations</div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f8fafc' }}>{locCount}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Locations</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>{locCount}</div>
                       </div>
-                      <div style={{ width: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+                      <div style={{ width: '1px', backgroundColor: '#EDF2F7' }} />
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>On-Hand Stock</div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34d399' }}>{whStock.toLocaleString()}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>On-Hand Stock</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16A34A' }}>{whStock.toLocaleString()}</div>
                       </div>
                     </div>
 
@@ -579,17 +656,27 @@ export default function WarehouseSettings() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        backgroundColor: 'rgba(51, 65, 85, 0.4)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#cbd5e1',
-                        padding: '6px 12px',
-                        borderRadius: '7px',
-                        fontSize: '0.8rem',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #CBD5E1',
+                        color: '#334155',
+                        padding: '7px 14px',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
                         fontWeight: 600,
                         cursor: 'pointer',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        transition: 'all 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'rgba(71, 85, 105, 0.7)')}
-                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.4)')}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#F8FAFD';
+                        e.currentTarget.style.color = '#0F172A';
+                        e.currentTarget.style.borderColor = '#94A3B8';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                        e.currentTarget.style.color = '#334155';
+                        e.currentTarget.style.borderColor = '#CBD5E1';
+                      }}
                     >
                       <Pencil size={13} />
                       <span>Edit Facility</span>
@@ -605,17 +692,26 @@ export default function WarehouseSettings() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        border: '1px solid rgba(99, 102, 241, 0.4)',
-                        color: '#a5b4fc',
-                        padding: '6px 12px',
-                        borderRadius: '7px',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
+                        backgroundColor: '#EBF3FC',
+                        border: '1px solid #BFDBFE',
+                        color: '#4A90E2',
+                        padding: '7px 14px',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
                         cursor: 'pointer',
+                        transition: 'all 0.15s',
                       }}
-                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.35)')}
-                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.2)')}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#4A90E2';
+                        e.currentTarget.style.color = '#FFFFFF';
+                        e.currentTarget.style.borderColor = '#4A90E2';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#EBF3FC';
+                        e.currentTarget.style.color = '#4A90E2';
+                        e.currentTarget.style.borderColor = '#BFDBFE';
+                      }}
                     >
                       <Plus size={14} />
                       <span>Add Bin</span>
@@ -625,13 +721,13 @@ export default function WarehouseSettings() {
 
                 {/* Sub-Locations Table (Expandable) */}
                 {!isCollapsed && (
-                  <div style={{ padding: '0 22px 18px', marginTop: '12px' }}>
+                  <div style={{ padding: '0 24px 20px', marginTop: '14px' }}>
                     <div style={{
-                      fontSize: '0.78rem',
+                      fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: '#94a3b8',
+                      color: '#64748B',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      letterSpacing: '0.06em',
                       marginBottom: '10px',
                       display: 'flex',
                       alignItems: 'center',
@@ -643,29 +739,30 @@ export default function WarehouseSettings() {
 
                     {locList.length === 0 ? (
                       <div style={{
-                        backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                        borderRadius: '8px',
-                        padding: '20px',
+                        backgroundColor: '#F8FAFD',
+                        border: '1px dashed #CBD5E1',
+                        borderRadius: '10px',
+                        padding: '24px',
                         textAlign: 'center',
-                        color: '#64748b',
+                        color: '#64748B',
                         fontSize: '0.85rem',
                       }}>
                         No internal locations or bins registered for this warehouse facility yet.
                       </div>
                     ) : (
                       <div style={{
-                        backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                        borderRadius: '10px',
+                        backgroundColor: '#F8FAFD',
+                        borderRadius: '12px',
                         overflow: 'hidden',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        border: '1px solid #EDF2F7',
                       }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                              <th style={{ padding: '10px 16px', fontWeight: 600 }}>Location / Bin Name</th>
-                              <th style={{ padding: '10px 16px', fontWeight: 600 }}>Short Code</th>
-                              <th style={{ padding: '10px 16px', fontWeight: 600, textAlign: 'right' }}>Current Stock On-Hand</th>
-                              <th style={{ padding: '10px 16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                            <tr style={{ borderBottom: '1px solid #EDF2F7', backgroundColor: '#F1F5F9', color: '#64748B', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              <th style={{ padding: '12px 18px', fontWeight: 700 }}>Location / Bin Name</th>
+                              <th style={{ padding: '12px 18px', fontWeight: 700 }}>Short Code</th>
+                              <th style={{ padding: '12px 18px', fontWeight: 700, textAlign: 'right' }}>Current Stock On-Hand</th>
+                              <th style={{ padding: '12px 18px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -675,39 +772,42 @@ export default function WarehouseSettings() {
                                 <tr
                                   key={loc.id || idx}
                                   style={{
-                                    borderBottom: idx < locList.length - 1 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
-                                    transition: 'background-color 0.15s',
+                                    borderBottom: idx < locList.length - 1 ? '1px solid #EDF2F7' : 'none',
+                                    transition: 'background-color 0.12s',
                                   }}
-                                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)')}
+                                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
                                   onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
-                                  <td style={{ padding: '12px 16px', color: '#f8fafc', fontWeight: 500 }}>
+                                  <td style={{ padding: '14px 18px', color: '#0F172A', fontWeight: 600 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <MapPin size={14} color="#818cf8" />
+                                      <MapPin size={14} color="#4A90E2" />
                                       <span>{loc.name}</span>
                                     </div>
                                   </td>
-                                  <td style={{ padding: '12px 16px' }}>
+                                  <td style={{ padding: '14px 18px' }}>
                                     <code style={{
-                                      backgroundColor: 'rgba(51, 65, 85, 0.5)',
-                                      color: '#93c5fd',
-                                      padding: '2px 8px',
-                                      borderRadius: '4px',
-                                      fontSize: '0.8rem',
+                                      backgroundColor: '#FFFFFF',
+                                      color: '#4A90E2',
+                                      border: '1px solid #CBD5E1',
+                                      padding: '3px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.78rem',
                                       fontFamily: 'monospace',
+                                      fontWeight: 700,
                                     }}>
                                       {loc.short_code}
                                     </code>
                                   </td>
-                                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                                     <span style={{
-                                      fontWeight: 600,
-                                      color: onHand > 0 ? '#34d399' : '#94a3b8',
+                                      fontWeight: 700,
+                                      color: onHand > 0 ? '#16A34A' : '#64748B',
+                                      fontSize: '0.88rem',
                                     }}>
                                       {onHand.toLocaleString()} units
                                     </span>
                                   </td>
-                                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                                     <button
                                       onClick={() => {
                                         setSelectedWarehouseIdForLoc(wh.id);
@@ -718,19 +818,30 @@ export default function WarehouseSettings() {
                                         setIsLocationModalOpen(true);
                                       }}
                                       style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: '#94a3b8',
+                                        background: '#FFFFFF',
+                                        border: '1px solid #CBD5E1',
+                                        color: '#475569',
                                         cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
+                                        padding: '5px 10px',
+                                        borderRadius: '6px',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '4px',
                                         fontSize: '0.78rem',
+                                        fontWeight: 600,
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                                        transition: 'all 0.15s ease',
                                       }}
-                                      onMouseOver={(e) => (e.currentTarget.style.color = '#cbd5e1')}
-                                      onMouseOut={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.color = '#0F172A';
+                                        e.currentTarget.style.borderColor = '#94A3B8';
+                                        e.currentTarget.style.backgroundColor = '#F8FAFD';
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.color = '#475569';
+                                        e.currentTarget.style.borderColor = '#CBD5E1';
+                                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                                      }}
                                     >
                                       <Pencil size={12} />
                                       <span>Edit</span>

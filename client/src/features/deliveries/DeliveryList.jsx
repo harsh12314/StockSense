@@ -29,26 +29,26 @@ import StatusBadge from '../../components/StatusBadge';
 import CreateDeliveryModal from './CreateDeliveryModal';
 
 const STATUS_META = {
-  draft:    { label: 'Draft',     color: '#64748b', bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)' },
-  waiting:  { label: 'Waiting',   color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
-  ready:    { label: 'Ready',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)'  },
-  done:     { label: 'Done',      color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)'  },
-  canceled: { label: 'Canceled',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)'  },
+  draft:    { label: 'Draft',     color: '#64748B', bg: 'rgba(100,116,139,0.08)', border: '#CBD5E1' },
+  waiting:  { label: 'Waiting',   color: '#D97706', bg: '#FEF3C7',                 border: '#FCD34D' },
+  ready:    { label: 'Ready',     color: '#2563EB', bg: '#EBF3FC',                 border: '#BFDBFE' },
+  done:     { label: 'Done',      color: '#16A34A', bg: '#DCFCE7',                 border: '#86EFAC' },
+  canceled: { label: 'Canceled',  color: '#DC2626', bg: '#FEE2E2',                 border: '#FCA5A5' },
 };
 
 function StatusPill({ status, size = 'md' }) {
   const meta = STATUS_META[status] || STATUS_META.draft;
-  const paddings = size === 'sm' ? '2px 8px' : '4px 12px';
+  const paddings = size === 'sm' ? '3px 10px' : '4px 12px';
   const fsize = size === 'sm' ? '0.72rem' : '0.78rem';
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '5px',
+      gap: '6px',
       padding: paddings,
-      borderRadius: '99px',
+      borderRadius: '9999px',
       backgroundColor: meta.bg,
-      border: `1px solid ${meta.border}`,
+      border: `1.5px solid ${meta.border}`,
       color: meta.color,
       fontSize: fsize,
       fontWeight: 700,
@@ -74,45 +74,60 @@ function KpiCard({ label, value, sub, color, accent, icon: Icon, onClick, active
     <div
       onClick={onClick}
       style={{
-        backgroundColor: active ? 'rgba(99,102,241,0.12)' : 'rgba(15,23,42,0.55)',
-        border: active ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '12px',
-        padding: '16px 20px',
+        backgroundColor: '#FFFFFF',
+        border: active ? '1.5px solid #4A90E2' : '1px solid #EDF2F7',
+        borderRadius: '18px',
+        padding: '20px 22px',
         cursor: 'pointer',
         transition: 'all 0.18s ease',
         display: 'flex',
         flexDirection: 'column',
-        gap: '6px',
+        gap: '8px',
         minWidth: 0,
+        boxShadow: active
+          ? '0 4px 16px rgba(74,144,226,0.12)'
+          : '0 2px 12px rgba(0,0,0,0.04)',
       }}
-      onMouseOver={e => { if (!active) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
-      onMouseOut={e => { if (!active) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
+      onMouseOver={e => {
+        if (!active) {
+          e.currentTarget.style.borderColor = '#CBD5E1';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.06)';
+        }
+      }}
+      onMouseOut={e => {
+        if (!active) {
+          e.currentTarget.style.borderColor = '#EDF2F7';
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)';
+        }
+      }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{
-          fontSize: '0.7rem',
+          fontSize: '0.72rem',
           fontWeight: 700,
-          color: '#94a3b8',
+          color: '#64748B',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
         }}>{label}</div>
         <div style={{
-          width: '32px', height: '32px', borderRadius: '8px',
-          backgroundColor: accent || 'rgba(99,102,241,0.15)',
-          color: color || '#818cf8',
+          width: '38px', height: '38px', borderRadius: '10px',
+          backgroundColor: accent || '#EBF3FC',
+          color: color || '#4A90E2',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
-          <Icon size={16} />
+          <Icon size={18} />
         </div>
       </div>
       <div style={{
-        fontSize: '1.75rem',
+        fontSize: '2rem',
         fontWeight: 800,
-        color: color || '#f8fafc',
-        lineHeight: 1,
+        color: '#0F172A',
+        lineHeight: 1.1,
       }}>{value}</div>
-      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub}</div>
+      <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 500 }}>{sub}</div>
     </div>
   );
 }
@@ -187,20 +202,20 @@ export default function DeliveryList() {
         marginBottom: '24px', flexWrap: 'wrap', gap: '16px',
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '38px', height: '38px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(59,130,246,0.25))',
-              border: '1px solid rgba(99,102,241,0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8',
+              width: '42px', height: '42px', borderRadius: '12px',
+              backgroundColor: '#EBF3FC',
+              border: '1px solid #BFDBFE',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4A90E2',
             }}>
-              <Truck size={20} />
+              <Truck size={22} />
             </div>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }}>
+              <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
                 Delivery Orders
               </h1>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', marginTop: '1px' }}>
+              <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#64748B' }}>
                 Pick → Pack → Validate — automatic stock deduction on dispatch
               </p>
             </div>
@@ -213,12 +228,21 @@ export default function DeliveryList() {
             disabled={refreshing}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              backgroundColor: 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.1)',
-              color: '#94a3b8', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer',
-              fontSize: '0.82rem', fontWeight: 500, transition: 'all 0.15s',
+              backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1',
+              color: '#334155', padding: '9px 16px', borderRadius: '10px', cursor: 'pointer',
+              fontSize: '0.84rem', fontWeight: 600, transition: 'all 0.15s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
-            onMouseOver={e => e.currentTarget.style.color = '#f8fafc'}
-            onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
+            onMouseOver={e => {
+              e.currentTarget.style.color = '#0F172A';
+              e.currentTarget.style.backgroundColor = '#F8FAFC';
+              e.currentTarget.style.borderColor = '#94A3B8';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.color = '#334155';
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+              e.currentTarget.style.borderColor = '#CBD5E1';
+            }}
           >
             <RefreshCw size={14} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
             Refresh
@@ -228,14 +252,22 @@ export default function DeliveryList() {
             onClick={() => setIsCreateOpen(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-              color: '#fff', border: 'none', padding: '9px 18px',
-              borderRadius: '8px', fontWeight: 700, fontSize: '0.875rem',
-              cursor: 'pointer', boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+              background: '#4A90E2',
+              color: '#fff', border: '1px solid #4A90E2', padding: '9px 18px',
+              borderRadius: '10px', fontWeight: 600, fontSize: '0.84rem',
+              cursor: 'pointer', boxShadow: '0 2px 8px rgba(74,144,226,0.25)',
               transition: 'all 0.15s',
             }}
-            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(99,102,241,0.45)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.35)'; }}
+            onMouseOver={e => {
+              e.currentTarget.style.backgroundColor = '#3B7DC4';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(74,144,226,0.35)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.backgroundColor = '#4A90E2';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(74,144,226,0.25)';
+            }}
           >
             <Plus size={16} /> New Delivery Order
           </button>
@@ -243,13 +275,13 @@ export default function DeliveryList() {
       </div>
 
       {/* ── KPI Strip ───────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <KpiCard
           label="To Deliver"
           value={stats.to_deliver_count ?? deliveries.filter(d => ['draft','waiting','ready'].includes(d.status)).length}
           sub="Active outgoing orders"
-          color="#818cf8"
-          accent="rgba(99,102,241,0.15)"
+          color="#4A90E2"
+          accent="#EBF3FC"
           icon={Boxes}
           onClick={() => setStatusFilter('all')}
           active={statusFilter === 'all'}
@@ -258,8 +290,8 @@ export default function DeliveryList() {
           label="Ready to Ship"
           value={readyCount}
           sub="Pick & pack verified"
-          color="#38bdf8"
-          accent="rgba(14,165,233,0.15)"
+          color="#2563EB"
+          accent="#EBF3FC"
           icon={PackageCheck}
           onClick={() => setStatusFilter('ready')}
           active={statusFilter === 'ready'}
@@ -268,8 +300,8 @@ export default function DeliveryList() {
           label="Waiting Stock"
           value={stats.waiting_count ?? 0}
           sub="Awaiting inventory"
-          color="#f59e0b"
-          accent="rgba(245,158,11,0.15)"
+          color="#D97706"
+          accent="#FEF3C7"
           icon={Timer}
           onClick={() => setStatusFilter('waiting')}
           active={statusFilter === 'waiting'}
@@ -278,8 +310,8 @@ export default function DeliveryList() {
           label="Late Orders"
           value={stats.late_count ?? 0}
           sub="Schedule date passed"
-          color="#f87171"
-          accent="rgba(239,68,68,0.15)"
+          color="#DC2626"
+          accent="#FEE2E2"
           icon={AlertTriangle}
           onClick={() => setStatusFilter('all')}
           active={false}
@@ -288,8 +320,8 @@ export default function DeliveryList() {
           label="Completed"
           value={stats.done_count ?? deliveries.filter(d => d.status === 'done').length}
           sub="Stock already deducted"
-          color="#34d399"
-          accent="rgba(16,185,129,0.15)"
+          color="#16A34A"
+          accent="#DCFCE7"
           icon={CheckCircle2}
           onClick={() => setStatusFilter('done')}
           active={statusFilter === 'done'}
@@ -298,47 +330,63 @@ export default function DeliveryList() {
 
       {/* ── Controls Bar ───────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap',
-        backgroundColor: 'rgba(15,23,42,0.4)', border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '12px', padding: '12px 16px', marginBottom: '16px',
+        display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap',
+        backgroundColor: '#FFFFFF', border: '1px solid #EDF2F7',
+        borderRadius: '14px', padding: '14px 18px', marginBottom: '20px',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
       }}>
         {/* Search */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          backgroundColor: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '8px', padding: '7px 14px', flex: 1, minWidth: '220px', maxWidth: '380px',
+          backgroundColor: '#F8FAFD', border: '1px solid #CBD5E1',
+          borderRadius: '8px', padding: '8px 14px', flex: 1, minWidth: '220px', maxWidth: '380px',
         }}>
-          <Search size={15} color="#64748b" />
+          <Search size={15} color="#64748B" />
           <input
             type="text"
             placeholder="Search reference, contact, address..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: '#f8fafc', fontSize: '0.85rem', width: '100%', outline: 'none' }}
+            style={{ background: 'transparent', border: 'none', color: '#0F172A', fontSize: '0.85rem', width: '100%', outline: 'none' }}
           />
           {searchTerm && (
-            <button onClick={() => setSearchTerm('')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', lineHeight: 1, padding: 0 }}>
+            <button onClick={() => setSearchTerm('')} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', lineHeight: 1, padding: 0 }}>
               <XCircle size={14} />
             </button>
           )}
         </div>
 
         {/* Status Filter Pills */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {['all', 'draft', 'waiting', 'ready', 'done', 'canceled'].map(st => {
             const isActive = statusFilter === st;
-            const meta = STATUS_META[st] || { color: '#94a3b8', bg: 'transparent', border: 'rgba(255,255,255,0.1)' };
+            const meta = STATUS_META[st] || { label: 'All Orders', color: '#4A90E2', bg: '#EBF3FC', border: '#4A90E2' };
             return (
               <button
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
                 style={{
-                  padding: '5px 14px', borderRadius: '99px', fontSize: '0.78rem', fontWeight: 600,
+                  padding: '6px 14px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: isActive ? 700 : 600,
                   cursor: 'pointer', transition: 'all 0.15s', textTransform: 'capitalize',
-                  backgroundColor: isActive ? meta.bg : 'rgba(30,41,59,0.5)',
-                  border: `1px solid ${isActive ? meta.border : 'rgba(255,255,255,0.08)'}`,
-                  color: isActive ? meta.color : '#94a3b8',
+                  backgroundColor: isActive ? meta.bg : '#F8FAFD',
+                  border: `1.5px solid ${isActive ? meta.border : '#CBD5E1'}`,
+                  color: isActive ? meta.color : '#475569',
+                  boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+                }}
+                onMouseOver={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#FFFFFF';
+                    e.currentTarget.style.color = '#0F172A';
+                    e.currentTarget.style.borderColor = '#94A3B8';
+                  }
+                }}
+                onMouseOut={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#F8FAFD';
+                    e.currentTarget.style.color = '#475569';
+                    e.currentTarget.style.borderColor = '#CBD5E1';
+                  }
                 }}
               >
                 {st === 'all' ? 'All Orders' : meta.label || st}
@@ -348,7 +396,7 @@ export default function DeliveryList() {
         </div>
 
         {/* View Toggle */}
-        <div style={{ display: 'flex', gap: '0', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', gap: '0', borderRadius: '8px', overflow: 'hidden', border: '1px solid #CBD5E1', marginLeft: 'auto', backgroundColor: '#F8FAFD' }}>
           {[['list', LayoutList], ['kanban', Columns3]].map(([mode, Icon]) => (
             <button
               key={mode}
@@ -356,13 +404,13 @@ export default function DeliveryList() {
               onClick={() => setViewMode(mode)}
               title={`${mode} view`}
               style={{
-                padding: '6px 12px', border: 'none', cursor: 'pointer',
-                backgroundColor: viewMode === mode ? 'rgba(99,102,241,0.3)' : 'rgba(15,23,42,0.6)',
-                color: viewMode === mode ? '#a5b4fc' : '#64748b',
+                padding: '7px 14px', border: 'none', cursor: 'pointer',
+                backgroundColor: viewMode === mode ? '#EBF3FC' : 'transparent',
+                color: viewMode === mode ? '#4A90E2' : '#64748B',
                 transition: 'all 0.15s',
               }}
             >
-              <Icon size={15} />
+              <Icon size={16} />
             </button>
           ))}
         </div>
@@ -370,11 +418,11 @@ export default function DeliveryList() {
 
       {/* ── Main Content ──────────────────────────────────────────── */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '70px 0', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', padding: '70px 0', color: '#64748B' }}>
           <div style={{
             display: 'inline-block', width: '32px', height: '32px',
-            border: '3px solid rgba(255,255,255,0.08)',
-            borderTopColor: '#6366f1', borderRadius: '50%',
+            border: '3px solid #EDF2F7',
+            borderTopColor: '#4A90E2', borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
           }} />
           <p style={{ marginTop: '14px', fontSize: '0.875rem' }}>Loading delivery orders...</p>
@@ -382,8 +430,8 @@ export default function DeliveryList() {
 
       ) : error ? (
         <div style={{
-          padding: '20px 24px', backgroundColor: 'rgba(239,68,68,0.12)',
-          border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#fca5a5',
+          padding: '20px 24px', backgroundColor: '#FEE2E2',
+          border: '1px solid #FECACA', borderRadius: '12px', color: '#DC2626',
           display: 'flex', alignItems: 'center', gap: '12px',
         }}>
           <AlertCircle size={20} />
@@ -395,22 +443,23 @@ export default function DeliveryList() {
 
       ) : filteredDeliveries.length === 0 ? (
         <div style={{
-          textAlign: 'center', padding: '60px 24px',
-          backgroundColor: 'rgba(15,23,42,0.35)', border: '1px dashed rgba(255,255,255,0.1)',
-          borderRadius: '16px', color: '#94a3b8',
+          textAlign: 'center', padding: '64px 24px',
+          backgroundColor: '#FFFFFF', border: '1.5px dashed #CBD5E1',
+          borderRadius: '18px', color: '#64748B',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.02)',
         }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '16px',
-            backgroundColor: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
+            backgroundColor: '#EBF3FC', border: '1px solid #BFDBFE',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px', color: '#818cf8',
+            margin: '0 auto 16px', color: '#4A90E2',
           }}>
             <Truck size={26} />
           </div>
-          <h3 style={{ color: '#f8fafc', margin: '0 0 6px', fontSize: '1.1rem', fontWeight: 700 }}>
+          <h3 style={{ color: '#0F172A', margin: '0 0 6px', fontSize: '1.15rem', fontWeight: 800 }}>
             No delivery orders found
           </h3>
-          <p style={{ margin: '0 0 20px', fontSize: '0.85rem', maxWidth: '380px', margin: '0 auto 20px' }}>
+          <p style={{ margin: '0 0 24px', fontSize: '0.85rem', maxWidth: '400px', margin: '0 auto 24px', color: '#64748B' }}>
             {searchTerm || statusFilter !== 'all'
               ? 'No orders match your current filters. Try clearing filters.'
               : 'Start by creating a new outgoing delivery order.'}
@@ -421,8 +470,9 @@ export default function DeliveryList() {
                 type="button"
                 onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
                 style={{
-                  padding: '8px 18px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
-                  backgroundColor: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem',
+                  padding: '9px 18px', borderRadius: '10px', border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '0.85rem',
+                  fontWeight: 600, boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 }}
               >
                 Clear Filters
@@ -432,10 +482,11 @@ export default function DeliveryList() {
               type="button"
               onClick={() => setIsCreateOpen(true)}
               style={{
-                padding: '9px 20px', borderRadius: '8px', border: 'none',
-                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                padding: '9px 20px', borderRadius: '10px', border: '1px solid #4A90E2',
+                background: '#4A90E2',
                 color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem',
                 display: 'flex', alignItems: 'center', gap: '6px',
+                boxShadow: '0 2px 8px rgba(74,144,226,0.25)',
               }}
             >
               <Plus size={15} /> Create Delivery Order
@@ -446,18 +497,19 @@ export default function DeliveryList() {
       ) : viewMode === 'list' ? (
         /* ── LIST TABLE ─────────────────────────────────────────────── */
         <div style={{
-          backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '14px', overflow: 'hidden',
+          backgroundColor: '#FFFFFF', border: '1px solid #EDF2F7',
+          borderRadius: '18px', overflow: 'hidden',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
         }}>
           {/* Toolbar */}
           <div style={{
-            padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+            padding: '14px 20px', borderBottom: '1px solid #EDF2F7',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            backgroundColor: 'rgba(15,23,42,0.3)',
+            backgroundColor: '#F8FAFD',
           }}>
-            <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 500 }}>
-              Showing <strong style={{ color: '#f8fafc' }}>{filteredDeliveries.length}</strong> order{filteredDeliveries.length !== 1 ? 's' : ''}
-              {statusFilter !== 'all' && <span style={{ color: STATUS_META[statusFilter]?.color || '#818cf8' }}> — {statusFilter}</span>}
+            <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 500 }}>
+              Showing <strong style={{ color: '#0F172A' }}>{filteredDeliveries.length}</strong> order{filteredDeliveries.length !== 1 ? 's' : ''}
+              {statusFilter !== 'all' && <span style={{ color: STATUS_META[statusFilter]?.color || '#4A90E2', fontWeight: 700 }}> — {statusFilter}</span>}
             </span>
           </div>
 
@@ -465,11 +517,11 @@ export default function DeliveryList() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <tr style={{ borderBottom: '1px solid #EDF2F7', backgroundColor: '#F8FAFD' }}>
                   {['Reference', 'Customer / Contact', 'From Location', 'Scheduled', 'Items', 'Status', ''].map((h, i) => (
                     <th key={i} style={{
-                      padding: '12px 16px', textAlign: i === 6 ? 'right' : 'left',
-                      color: '#64748b', fontSize: '0.72rem', fontWeight: 700,
+                      padding: '14px 18px', textAlign: i === 6 ? 'right' : 'left',
+                      color: '#64748B', fontSize: '0.72rem', fontWeight: 700,
                       textTransform: 'uppercase', letterSpacing: '0.05em',
                       whiteSpace: 'nowrap',
                     }}>{h}</th>
@@ -477,39 +529,38 @@ export default function DeliveryList() {
                 </tr>
               </thead>
               <tbody>
-                {filteredDeliveries.map((item, idx) => {
+                {filteredDeliveries.map((item) => {
                   const late = isLate(item.schedule_date, item.status);
-                  const isEven = idx % 2 === 0;
                   return (
                     <tr
                       key={item.id}
                       onClick={() => navigate(`/deliveries/${item.id}`)}
                       style={{
                         cursor: 'pointer', transition: 'background-color 0.12s',
-                        borderBottom: '1px solid rgba(255,255,255,0.04)',
-                        backgroundColor: isEven ? 'transparent' : 'rgba(255,255,255,0.015)',
+                        borderBottom: '1px solid #F1F5F9',
+                        backgroundColor: 'transparent',
                       }}
-                      onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.06)'}
-                      onMouseOut={e => e.currentTarget.style.backgroundColor = isEven ? 'transparent' : 'rgba(255,255,255,0.015)'}
+                      onMouseOver={e => e.currentTarget.style.backgroundColor = '#F8FAFD'}
+                      onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {/* Reference */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '16px 18px', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{
-                            width: '34px', height: '34px', borderRadius: '8px', flexShrink: 0,
+                            width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
                             backgroundColor: item.status === 'done'
-                              ? 'rgba(16,185,129,0.12)' : item.status === 'ready'
-                              ? 'rgba(59,130,246,0.12)' : 'rgba(99,102,241,0.12)',
+                              ? '#DCFCE7' : item.status === 'ready'
+                              ? '#EBF3FC' : '#F1F5F9',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: item.status === 'done' ? '#34d399' : item.status === 'ready' ? '#60a5fa' : '#818cf8',
+                            color: item.status === 'done' ? '#16A34A' : item.status === 'ready' ? '#4A90E2' : '#64748B',
                           }}>
-                            <Truck size={16} />
+                            <Truck size={17} />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 700, color: '#f8fafc', fontFamily: 'monospace', fontSize: '0.88rem' }}>
+                            <div style={{ fontWeight: 700, color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>
                               {item.reference}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
                               {item.operation_type || 'Delivery Orders'}
                             </div>
                           </div>
@@ -517,27 +568,28 @@ export default function DeliveryList() {
                       </td>
 
                       {/* Customer */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontWeight: 600, color: '#f1f5f9', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '16px 18px' }}>
+                        <div style={{ fontWeight: 600, color: '#0F172A', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.to_contact || '—'}
                         </div>
                         {item.delivery_address && (
-                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <MapPin size={10} style={{ marginRight: '3px', verticalAlign: 'middle' }} />
+                          <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '3px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <MapPin size={11} style={{ marginRight: '3px', verticalAlign: 'middle', color: '#94A3B8' }} />
                             {item.delivery_address}
                           </div>
                         )}
                       </td>
 
                       {/* From Location */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 500, color: '#cbd5e1' }}>
+                      <td style={{ padding: '16px 18px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#1E293B' }}>
                           {item.from_location_name || 'Stock Room'}
                         </div>
                         {item.from_location_code && (
                           <code style={{
-                            fontSize: '0.68rem', color: '#6366f1', backgroundColor: 'rgba(99,102,241,0.12)',
-                            padding: '1px 5px', borderRadius: '4px', marginTop: '2px', display: 'inline-block',
+                            fontSize: '0.72rem', color: '#4A90E2', backgroundColor: '#EBF3FC',
+                            padding: '2px 6px', borderRadius: '4px', marginTop: '3px', display: 'inline-block',
+                            fontFamily: 'monospace', fontWeight: 700,
                           }}>
                             {item.from_location_code}
                           </code>
@@ -545,64 +597,64 @@ export default function DeliveryList() {
                       </td>
 
                       {/* Scheduled Date */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '16px 18px', whiteSpace: 'nowrap' }}>
                         {item.schedule_date ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {late ? (
                               <div style={{
                                 display: 'flex', alignItems: 'center', gap: '5px',
-                                color: '#f87171', fontWeight: 700,
-                                backgroundColor: 'rgba(239,68,68,0.1)',
-                                border: '1px solid rgba(239,68,68,0.25)',
-                                padding: '3px 8px', borderRadius: '6px', fontSize: '0.8rem',
+                                color: '#DC2626', fontWeight: 700,
+                                backgroundColor: '#FEE2E2',
+                                border: '1px solid #FECACA',
+                                padding: '3px 8px', borderRadius: '6px', fontSize: '0.78rem',
                               }}>
                                 <AlertTriangle size={12} />
                                 {item.schedule_date.split('T')[0]} LATE
                               </div>
                             ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#94a3b8', fontSize: '0.82rem' }}>
-                                <Calendar size={12} />
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#475569', fontSize: '0.82rem', fontWeight: 500 }}>
+                                <Calendar size={13} color="#94A3B8" />
                                 {item.schedule_date.split('T')[0]}
                               </div>
                             )}
                           </div>
                         ) : (
-                          <span style={{ color: '#475569', fontSize: '0.8rem' }}>—</span>
+                          <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>—</span>
                         )}
                       </td>
 
                       {/* Items */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '16px 18px', whiteSpace: 'nowrap' }}>
                         <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '4px',
-                          padding: '3px 10px', borderRadius: '99px',
-                          backgroundColor: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.08)',
-                          color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600,
+                          display: 'inline-flex', alignItems: 'center', gap: '5px',
+                          padding: '3px 10px', borderRadius: '9999px',
+                          backgroundColor: '#F1F5F9', border: '1px solid #E2E8F0',
+                          color: '#475569', fontSize: '0.75rem', fontWeight: 600,
                         }}>
-                          <Package size={12} />
+                          <Package size={12} color="#64748B" />
                           {item.line_count ?? 0} item{(item.line_count ?? 0) !== 1 ? 's' : ''}
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td style={{ padding: '16px 18px' }}>
                         <StatusPill status={item.status} size="sm" />
                       </td>
 
                       {/* Action */}
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                      <td style={{ padding: '16px 18px', textAlign: 'right' }}>
                         <button
                           type="button"
                           onClick={e => { e.stopPropagation(); navigate(`/deliveries/${item.id}`); }}
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '6px 12px', borderRadius: '7px', border: '1px solid rgba(255,255,255,0.1)',
-                            backgroundColor: 'rgba(30,41,59,0.7)', color: '#cbd5e1',
-                            cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+                            padding: '6px 12px', borderRadius: '8px', border: '1px solid #BFDBFE',
+                            backgroundColor: '#EBF3FC', color: '#4A90E2',
+                            cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700,
                             transition: 'all 0.15s',
                           }}
-                          onMouseOver={e => { e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.2)'; e.currentTarget.style.color = '#a5b4fc'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; }}
-                          onMouseOut={e => { e.currentTarget.style.backgroundColor = 'rgba(30,41,59,0.7)'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                          onMouseOver={e => { e.currentTarget.style.backgroundColor = '#4A90E2'; e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.borderColor = '#4A90E2'; }}
+                          onMouseOut={e => { e.currentTarget.style.backgroundColor = '#EBF3FC'; e.currentTarget.style.color = '#4A90E2'; e.currentTarget.style.borderColor = '#BFDBFE'; }}
                         >
                           {item.status === 'done' ? 'View' : 'Process'} <ChevronRight size={13} />
                         </button>
@@ -624,31 +676,32 @@ export default function DeliveryList() {
             return (
               <div key={col} style={{
                 display: 'flex', flexDirection: 'column', gap: '0',
-                backgroundColor: 'rgba(15,23,42,0.4)', border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '12px', overflow: 'hidden',
+                backgroundColor: '#FFFFFF', border: '1px solid #EDF2F7',
+                borderRadius: '16px', overflow: 'hidden',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
               }}>
                 {/* Column Header */}
                 <div style={{
-                  padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  padding: '14px 18px', borderBottom: '1px solid #EDF2F7',
                   backgroundColor: `${meta.bg}`,
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.82rem', color: meta.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.8rem', color: meta.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     {meta.label}
                   </span>
                   <span style={{
-                    backgroundColor: meta.bg, border: `1px solid ${meta.border}`,
-                    color: meta.color, borderRadius: '99px', padding: '2px 8px',
-                    fontSize: '0.72rem', fontWeight: 700,
+                    backgroundColor: '#FFFFFF', border: `1.5px solid ${meta.border}`,
+                    color: meta.color, borderRadius: '9999px', padding: '2px 8px',
+                    fontSize: '0.72rem', fontWeight: 800,
                   }}>
                     {colItems.length}
                   </span>
                 </div>
 
                 {/* Cards */}
-                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px' }}>
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '200px', backgroundColor: '#F8FAFD' }}>
                   {colItems.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#475569', fontSize: '0.8rem' }}>
+                    <div style={{ textAlign: 'center', padding: '36px 10px', color: '#94A3B8', fontSize: '0.82rem' }}>
                       No {col} orders
                     </div>
                   ) : colItems.map(item => {
@@ -658,27 +711,34 @@ export default function DeliveryList() {
                         key={item.id}
                         onClick={() => navigate(`/deliveries/${item.id}`)}
                         style={{
-                          backgroundColor: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.07)',
-                          borderRadius: '10px', padding: '13px 14px', cursor: 'pointer',
-                          transition: 'all 0.15s', borderLeft: `3px solid ${meta.color}`,
+                          backgroundColor: '#FFFFFF', border: '1px solid #EDF2F7',
+                          borderRadius: '12px', padding: '14px', cursor: 'pointer',
+                          transition: 'all 0.15s', borderLeft: `3.5px solid ${meta.color}`,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                         }}
-                        onMouseOver={e => { e.currentTarget.style.backgroundColor = 'rgba(30,41,59,0.9)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                        onMouseOut={e => { e.currentTarget.style.backgroundColor = 'rgba(15,23,42,0.7)'; e.currentTarget.style.transform = ''; }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.transform = 'none';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                        }}
                       >
-                        <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700, color: '#818cf8', marginBottom: '6px' }}>
+                        <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700, color: '#4A90E2', marginBottom: '6px' }}>
                           {item.reference}
                         </div>
-                        <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.875rem', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 600, color: '#0F172A', fontSize: '0.88rem', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.to_contact || 'Customer'}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748B' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Package size={11} />
+                            <Package size={12} color="#64748B" />
                             {item.line_count ?? 0} items
                           </span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: late ? '#f87171' : '#64748b', fontWeight: late ? 700 : 400 }}>
-                            {late && <AlertTriangle size={10} />}
-                            <Calendar size={11} />
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: late ? '#DC2626' : '#64748B', fontWeight: late ? 700 : 500 }}>
+                            {late && <AlertTriangle size={11} />}
+                            <Calendar size={12} color={late ? '#DC2626' : '#94A3B8'} />
                             {item.schedule_date ? item.schedule_date.split('T')[0] : '—'}
                           </span>
                         </div>
