@@ -15,9 +15,10 @@ const STATUS_LABELS = {
  * status: 'draft' | 'waiting' | 'ready' | 'done' | 'canceled' | 'late'
  */
 export default function StatusBadge({ status }) {
-  const label = STATUS_LABELS[status] || status;
+  const normalized = status ? status.toLowerCase() : 'draft';
+  const label = STATUS_LABELS[normalized] || status;
   return (
-    <span className={`status-badge status-${status}`} aria-label={`Status: ${label}`}>
+    <span className={`status-badge status-${normalized}`} aria-label={`Status: ${label}`}>
       {label}
     </span>
   );

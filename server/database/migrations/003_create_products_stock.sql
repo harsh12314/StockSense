@@ -1,3 +1,4 @@
+-- 003_create_products_stock.sql
 CREATE TABLE IF NOT EXISTS categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) UNIQUE NOT NULL
@@ -11,8 +12,10 @@ CREATE TABLE IF NOT EXISTS products (
   unit_of_measure VARCHAR(50),
   per_unit_cost DECIMAL(10,2) DEFAULT 0,
   reordering_rule VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (category_id) REFERENCES categories(id),
-  INDEX idx_category (category_id)
+  INDEX idx_category (category_id),
+  INDEX idx_sku (sku)
 );
 
 CREATE TABLE IF NOT EXISTS stock (

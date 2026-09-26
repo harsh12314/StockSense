@@ -22,11 +22,16 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes — each feature mounts its own router here
+<<<<<<< HEAD
 app.use('/api/auth',       authRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/receipts',   receiptRoutes);
 app.use('/api/ref',        referenceRoutes);
 app.use('/api/products',   productRoutes);
+=======
+app.use('/api/auth', authRoutes);
+app.use('/api/products', require('./src/routes/products'));
+>>>>>>> f70840229ec6ad57c0fcf1f03fc9ddc319e2ec1c
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {

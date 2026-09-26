@@ -1,3 +1,4 @@
+-- 008_create_move_history.sql
 CREATE TABLE IF NOT EXISTS move_history (
   id INT AUTO_INCREMENT PRIMARY KEY,
   reference VARCHAR(50) NOT NULL,

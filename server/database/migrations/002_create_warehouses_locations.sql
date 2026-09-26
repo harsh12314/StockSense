@@ -1,3 +1,4 @@
+-- 002_create_warehouses_locations.sql
 CREATE TABLE IF NOT EXISTS warehouses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,

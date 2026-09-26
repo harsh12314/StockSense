@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-export default function Modal({ isOpen, onClose, title, children, maxWidth = '550px' }) {
+export default function Modal({ isOpen = true, onClose, title, children, maxWidth = '550px', footer }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -74,6 +74,11 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '55
         <div className="card-body" style={{ padding: '20px' }}>
           {children}
         </div>
+        {footer && (
+          <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
