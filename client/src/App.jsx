@@ -3,15 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
-<<<<<<< HEAD
 import ReceiptsList from './features/receipts/ReceiptsList';
 import ReceiptDetail from './features/receipts/ReceiptDetail';
 import DeliveryList from './features/deliveries/DeliveryList';
 import DeliveryDetail from './features/deliveries/DeliveryDetail';
 import './index.css';
-=======
-import ProductsPage from './features/products/ProductsPage';
->>>>>>> f70840229ec6ad57c0fcf1f03fc9ddc319e2ec1c
 import './App.css';
 
 export default function App() {
@@ -77,10 +73,6 @@ export default function App() {
           <Route
             path="/deliveries/:id"
             element={<DeliveryDetail />}
-          />
-          <Route
-            path="/products"
-            element={token ? <ProductsPage /> : <Navigate to="/login" />}
           />
         </Routes>
       </div>
