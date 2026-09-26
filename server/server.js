@@ -8,6 +8,7 @@ const deliveryRoutes  = require('./src/routes/deliveries');
 const receiptRoutes   = require('./src/routes/receipts');
 const referenceRoutes = require('./src/routes/reference');
 const productRoutes   = require('./src/routes/products');
+const transferRoutes  = require('./src/routes/transfers');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/receipts',   receiptRoutes);
 app.use('/api/ref',        referenceRoutes);
 app.use('/api/products',   productRoutes);
+app.use('/api/transfers',  transferRoutes);
 
 // 404 Handler for unmatched routes
 app.use((req, res) => {

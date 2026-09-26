@@ -6,8 +6,10 @@ import StatusBadge from './common/StatusBadge';
 import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
+import TransferList from '../features/transfers/TransferList';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
+import CreateTransferModal from '../features/transfers/CreateTransferModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
 import { get } from '../api/client';
 import {
@@ -24,6 +26,7 @@ import {
   IconSearch,
   IconHistory,
   IconWarehouse,
+  IconTransfer,
 } from './common/Icons';
 
 export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
@@ -44,6 +47,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   // Modal states for Quick Actions
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [creatingReceipt, setCreatingReceipt] = useState(false);
 
   // 100% Live database data states
@@ -51,6 +55,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [receipts, setReceipts] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
+  const [transferStats, setTransferStats] = useState({});
   const [activities, setActivities] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [actionNotice, setActionNotice] = useState(null);
@@ -77,19 +82,21 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   // Fetch live operational data from backend MySQL database
   const loadDashboardData = useCallback(async () => {
     try {
-      const [prodRes, recRes, delRes, statsRes, whRes, movesRes] = await Promise.all([
+      const [prodRes, recRes, delRes, statsRes, whRes, movesRes, transStatsRes] = await Promise.all([
         get('/products').catch(() => ({ data: [] })),
         get('/receipts').catch(() => ({ data: [] })),
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
         get('/ref/warehouses').catch(() => ({ data: [] })),
         get('/ref/moves').catch(() => ({ data: [] })),
+        get('/transfers/stats').catch(() => ({ data: {} })),
       ]);
 
       if (prodRes?.data) setProducts(prodRes.data);
       if (recRes?.data) setReceipts(recRes.data);
       if (delRes?.data) setDeliveries(delRes.data);
       if (statsRes?.data) setDeliveryStats(statsRes.data);
+      if (transStatsRes?.data) setTransferStats(transStatsRes.data);
 
       if (whRes?.data && whRes.data.length > 0) {
         setWarehouses(whRes.data.map(w => ({
@@ -104,15 +111,16 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         const mapped = movesRes.data.map((m) => {
           const isIncoming = m.direction === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock';
           const isAdjustment = m.reference?.startsWith('ADJ') || m.contact === 'Stock Adjustment';
-          const actType = isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
+          const isTransfer = m.reference?.includes('/TRANS/') || m.contact === 'Internal Transfer';
+          const actType = isTransfer ? 'TRANS' : isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
 
           return {
             id: m.id,
             type: actType,
             reference: m.reference || `MOV/${m.id}`,
             product: m.product_name || `Product #${m.product_id}`,
-            qty: `${actType === 'IN' ? '+' : '-'}${m.quantity} ${m.uom || 'units'}`,
-            location: m.to_location || m.from_location || 'Stock Room',
+            qty: `${isTransfer ? '⇄ ' : actType === 'IN' ? '+' : '-'}${m.quantity} ${m.uom || 'units'}`,
+            location: isTransfer ? `${m.from_location} → ${m.to_location}` : (m.to_location || m.from_location || 'Stock Room'),
             contact: m.contact || (isIncoming ? 'Supplier' : 'Customer'),
             status: m.status || 'done',
             time: m.move_date
@@ -205,6 +213,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           totalProducts: products.length,
           pendingReceipts: pendingReceipts.length,
           pendingDeliveries: pendingDeliveries.length,
+          pendingTransfers: transferStats?.draft_count || 0,
         }}
       />
 
@@ -257,6 +266,14 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
                   >
                     <IconTruck size={16} />
                     <span>+ New Delivery</span>
+                  </button>
+
+                  <button
+                    className="action-btn btn-action-secondary"
+                    onClick={() => setIsTransferModalOpen(true)}
+                  >
+                    <IconTransfer size={16} />
+                    <span>+ Transfer</span>
                   </button>
 
                   <button
@@ -708,7 +725,13 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
             </div>
           )}
 
-          {(activeTab === 'transfers' || activeTab === 'adjustments' || activeTab === 'settings') && (
+          {activeTab === 'transfers' && (
+            <div className="view-container">
+              <TransferList onOpenTransfer={(id) => navigate(`/transfers/${id}`)} />
+            </div>
+          )}
+
+          {(activeTab === 'adjustments' || activeTab === 'settings') && (
             <div className="view-container">
               <div className="view-header">
                 <div>
@@ -735,6 +758,18 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
           setIsDeliveryModalOpen(false);
           if (newDelivery && newDelivery.id) {
             navigate(`/deliveries/${newDelivery.id}`);
+          }
+        }}
+      />
+
+      <CreateTransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        onCreated={(newTransfer) => {
+          loadDashboardData();
+          setIsTransferModalOpen(false);
+          if (newTransfer && newTransfer.id) {
+            navigate(`/transfers/${newTransfer.id}`);
           }
         }}
       />
