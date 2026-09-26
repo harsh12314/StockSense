@@ -6,6 +6,7 @@ import StatusBadge from './common/StatusBadge';
 import ProductList from '../features/products/ProductList';
 import DeliveryList from '../features/deliveries/DeliveryList';
 import ReceiptsList from '../features/receipts/ReceiptsList';
+import StockLedger from '../features/ledger/StockLedger';
 import CreateDeliveryModal from '../features/deliveries/CreateDeliveryModal';
 import CreateProductModal from '../features/products/CreateProductModal';
 import { receiptsApi } from '../features/receipts/receiptsApi';
@@ -52,7 +53,11 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
   const [deliveries, setDeliveries] = useState([]);
   const [deliveryStats, setDeliveryStats] = useState({});
   const [activities, setActivities] = useState([]);
+<<<<<<< HEAD
   const [warehouses, setWarehouses] = useState([]);
+=======
+  const [warehouses, setWarehouses] = useState(INITIAL_WAREHOUSES);
+>>>>>>> feature/ledger
   const [actionNotice, setActionNotice] = useState(null);
 
   const showNotice = (msg) => {
@@ -83,7 +88,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         get('/deliveries').catch(() => ({ data: [] })),
         get('/deliveries/stats').catch(() => ({ data: {} })),
         get('/ref/warehouses').catch(() => ({ data: [] })),
-        get('/ref/moves').catch(() => ({ data: [] })),
+        get('/ledger?limit=30').catch(() => get('/moves?limit=30')).catch(() => get('/ref/moves')).catch(() => ({ data: [] })),
       ]);
 
       if (prodRes?.data) setProducts(prodRes.data);
@@ -100,27 +105,37 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
         })));
       }
 
-      if (movesRes?.data && movesRes.data.length > 0) {
-        const mapped = movesRes.data.map((m) => {
-          const isIncoming = m.direction === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock';
+      if (movesRes?.data && Array.isArray(movesRes.data)) {
+        const formattedMoves = movesRes.data.map((m) => {
+          const isIncoming = (m.direction || '').toLowerCase() === 'in' || m.to_location === 'Stock Room' || m.to_location === 'Stock' || m.to_location === 'WH/STOCK';
           const isAdjustment = m.reference?.startsWith('ADJ') || m.contact === 'Stock Adjustment';
           const actType = isAdjustment ? 'ADJUST' : isIncoming ? 'IN' : 'OUT';
+
+          let timeStr = 'Recent';
+          if (m.move_date) {
+            try {
+              const d = new Date(m.move_date);
+              timeStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            } catch {
+              timeStr = String(m.move_date);
+            }
+          }
 
           return {
             id: m.id,
             type: actType,
             reference: m.reference || `MOV/${m.id}`,
-            product: m.product_name || `Product #${m.product_id}`,
-            qty: `${actType === 'IN' ? '+' : '-'}${m.quantity} ${m.uom || 'units'}`,
-            location: m.to_location || m.from_location || 'Stock Room',
+            time: timeStr,
+            product: m.product_name || m.product || `Product #${m.product_id}`,
+            sku: m.product_sku || '',
+            qty: `${actType === 'IN' ? '+' : '-'}${m.quantity} ${m.unit_of_measure || m.uom || 'units'}`,
+            rawQty: m.quantity,
             contact: m.contact || (isIncoming ? 'Supplier' : 'Customer'),
+            location: m.to_location || m.from_location || 'Stock',
             status: m.status || 'done',
-            time: m.move_date
-              ? new Date(m.move_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'Recent',
           };
         });
-        setActivities(mapped);
+        setActivities(formattedMoves);
       }
     } catch (err) {
       console.warn('Dashboard live data fetch error:', err);
@@ -626,51 +641,7 @@ export default function Dashboard({ onLogout, initialTab = 'dashboard' }) {
 
           {activeTab === 'ledger' && (
             <div className="view-container">
-              <div className="view-header">
-                <div>
-                  <h1 className="page-heading">Stock Ledger & Move History</h1>
-                  <p className="page-subheading">Immutable chronological record of all product arrivals, departures, and count adjustments.</p>
-                </div>
-              </div>
-
-              <div className="data-table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Reference</th>
-                      <th>Product</th>
-                      <th>Quantity Delta</th>
-                      <th>Location</th>
-                      <th>Contact / Source</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activities.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
-                          No movements found in ledger history.
-                        </td>
-                      </tr>
-                    ) : (
-                      activities.map((a) => (
-                        <tr key={a.id} className={a.type === 'IN' ? 'row-in' : a.type === 'OUT' ? 'row-out' : ''}>
-                          <td>
-                            <span className={`type-tag ${a.type.toLowerCase()}`}>{a.type}</span>
-                          </td>
-                          <td><span className="code-pill">{a.reference}</span></td>
-                          <td className="font-semibold">{a.product}</td>
-                          <td className={a.type === 'IN' ? 'text-green' : 'text-red'}>{a.qty}</td>
-                          <td>{a.location}</td>
-                          <td>{a.contact}</td>
-                          <td><StatusBadge status={a.status} /></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <StockLedger />
             </div>
           )}
 
